@@ -10,6 +10,8 @@ start:
     mov ax, 0xABCD
     call bios_print_hex16
 
+    call verify_a20
+
     mov si, greeting    ; Print greeting
     call bios_print
 
@@ -25,6 +27,27 @@ start:
 hang:
     hlt
     jmp hang
+
+; Verifies the A20 line is enabled, if not, it prints an error message and hangs
+verify_a20:
+    cli
+    xor ax, ax
+    mov fs, ax          ; FS = 0x0000
+    not ax
+    mov gs, ax          ; GS = 0xFFFF
+    mov di, 0x7DFE
+    mov si, 0x7E0E
+    mov ax, [fs:di]     ; Should be our boot signature 0x55AA (at 0000:7DFE)
+    mov bx, [gs:si]     ; Memory 1 MiB up (at FFFF:7E0E)
+    cmp ax, bx          ; If different, A20 must be enabled
+    jne .done
+
+    mov si, .disabled   ; If A20 is disabled, print an error and hang
+    call bios_print
+    jmp hang
+.done:
+    ret
+.disabled db "ERROR: A20 Disabled", 13, 10, 0
 
 ; Checks wether the CPU supports long mode
 ; Returns with the carry flag set, if not supported
