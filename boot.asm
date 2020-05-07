@@ -1,8 +1,11 @@
 ORG 0x7C00
 BITS 16
 
+start:
     xor ax, ax
     mov ds, ax
+    mov ss, ax
+    mov sp, start       ; Stack lives just underneath the bootsector and grows downwards
 
     mov ax, 0xABCD
     call bios_print_hex16
