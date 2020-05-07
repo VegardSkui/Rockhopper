@@ -14,7 +14,7 @@ hang:
 ; Print string from SI using the BIOS
 bios_print:
     cld             ; Clear direction flag (to make sure SI is incremented)
-.loop
+.loop:
     lodsb           ; Load byte (character) at address DS:SI into AL
     or al, al       ; Zero means we're at the end of the string
     jz .done
