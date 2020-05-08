@@ -1,7 +1,9 @@
 .PHONY: all clean
 
-all:
-	nasm boot.asm -o boot.bin
+all: boot.bin
+
+%.bin: %.asm
+	nasm -fbin $< -o $@
 
 clean:
 	rm -f boot.bin
