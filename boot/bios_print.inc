@@ -12,10 +12,20 @@ bios_print:
 .done:
     ret
 
+; Print error string from SI using the BIOS
+bios_print_error:
+    push si         ; Store the current value of SI on the stack
+    mov si, .error  ; Point SI to the error prefix string
+    call bios_print ; Print the error prefix
+    pop si          ; Restore the old value of SI
+    call bios_print ; Print the string pointed to by SI
+    ret
+.error db "ERROR: ", 0
+
 ; Print 16 bit hex from AX using the BIOS
 bios_print_hex16:
-    mov di, .outhex16    ; Point DI to the beginning of the output string
-    mov si, .hexstr      ; Point SI to the beginning of the hex lookup string
+    mov di, .outhex16   ; Point DI to the beginning of the output string
+    mov si, .hexstr     ; Point SI to the beginning of the hex lookup string
     mov cx, 4           ; We'll need to repeat 4 times, one for each nibble
 .loop:
     rol ax, 4           ; Rotate AX by one nibble
@@ -26,7 +36,7 @@ bios_print_hex16:
     inc di              ; Point DI to the next character
     loop .loop
 
-    mov si, .outhex16    ; Point SI to the output string
+    mov si, .outhex16   ; Point SI to the output string
     call bios_print     ; and print
     ret
 
