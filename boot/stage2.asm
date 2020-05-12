@@ -14,6 +14,11 @@ BITS 16
     mov dword [0x2000], 0x3003  ; Page Directory Pointer Table
     mov dword [0x3000], 0x0083  ; Page Directory (identity map first 2 MiB with huge page)
 
+    ; Disable the Programmable Interrupt Controller (PIC)
+    mov al, 0xFF
+    out 0xA1, al
+    out 0x21, al
+
     ; Set the PAE and PGE bits
     mov eax, 0b10100000
     mov cr4, eax
