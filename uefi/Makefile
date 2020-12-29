@@ -17,11 +17,11 @@ LDFLAGS = \
 
 all: main.efi uefi.cdr
 
-main.o: main.c
-	clang $(CFLAGS) -c -o main.o main.c
+%.o: %.c
+	clang $(CFLAGS) -c -o $@ $<
 
-main.efi: main.o
-	clang $(LDFLAGS) -o MAIN.EFI main.o
+%.efi: %.o
+	clang $(LDFLAGS) -o $@ $<
 
 uefi.cdr: main.efi
 	mkdir -p diskimage/EFI/BOOT
