@@ -1,0 +1,6 @@
+*.o
+*.efi
+diskimage/
+uefi.cdr
+gnu-efi/
+bios64.bin
