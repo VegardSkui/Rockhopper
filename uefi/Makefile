@@ -15,17 +15,22 @@ LDFLAGS = \
 	-Wl,-subsystem:efi_application \
 	-fuse-ld=lld-link
 
-all: main.efi uefi.cdr
+all: uefi.cdr
 
 %.o: %.c
 	clang $(CFLAGS) -c -o $@ $<
 
-%.efi: %.o
+hello.efi: hello.o
 	clang $(LDFLAGS) -o $@ $<
 
-uefi.cdr: main.efi
+main.efi: main.o utils.o
+	clang $(LDFLAGS) -o main.efi main.o utils.o
+
+uefi.cdr: hello.efi main.efi
 	mkdir -p diskimage/EFI/BOOT
-	cp main.efi diskimage/EFI/MAIN.EFI
+	mkdir -p diskimage/ROCKHOPPER
+	cp main.efi diskimage/EFI/BOOT/BOOTX64.EFI
+	cp hello.efi diskimage/ROCKHOPPER/HELLO.EFI
 	hdiutil create -fs fat32 -ov -size 48m -volname ROCKHOPPER -format UDTO -srcfolder diskimage uefi.cdr
 
 clean:
