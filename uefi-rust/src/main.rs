@@ -37,6 +37,17 @@ fn efi_main(image_handle: EfiHandle, system_table: &'static mut EfiSystemTable) 
 
     println!("Hello World!");
 
+    // Print the firmware vendor and revision
+    print!("Firmware: ");
+    system_table
+        .con_out()
+        .output_string(system_table.firmware_vendor());
+    println!(", rev. {:#010x}", system_table.firmware_revision());
+
+    // Print the UEFI revision
+    let revision = system_table.revision();
+    println!("UEFI v{}.{}", (revision >> 16) as u16, revision as u16);
+
     hang()
 }
 

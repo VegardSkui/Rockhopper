@@ -31,6 +31,19 @@ pub struct EfiSystemTable {
 }
 
 impl EfiSystemTable {
+    /// Returns the revision of the EFI Specification this table conforms to.
+    pub fn revision(&self) -> u32 {
+        self.hdr.revision
+    }
+
+    pub fn firmware_vendor(&self) -> &Char16 {
+        unsafe { &*self.firmware_vendor }
+    }
+
+    pub fn firmware_revision(&self) -> u32 {
+        self.firmware_revision
+    }
+
     /// Returns the simple text output protocol.
     pub fn con_out(&self) -> &mut EfiSimpleTextOutputProtocol {
         let con_out_ptr = self.con_out as *mut EfiSimpleTextOutputProtocol;
