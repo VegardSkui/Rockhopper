@@ -48,6 +48,10 @@ fn efi_main(image_handle: EfiHandle, system_table: &'static mut EfiSystemTable) 
     let revision = system_table.revision();
     println!("UEFI v{}.{}", (revision >> 16) as u16, revision as u16);
 
+    println!("\nStalling for 1 second");
+    system_table.boot_services().stall(1_000_000);
+    println!("Done!");
+
     hang()
 }
 

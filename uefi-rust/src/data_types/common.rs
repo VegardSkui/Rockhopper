@@ -22,3 +22,6 @@ pub struct EfiHandle(pub *const c_void);
 
 #[repr(transparent)]
 pub struct EfiEvent(*const c_void);
+
+#[repr(transparent)]
+pub struct EfiTpl(usize);
