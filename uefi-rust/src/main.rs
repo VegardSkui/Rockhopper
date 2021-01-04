@@ -5,6 +5,9 @@
 
 extern crate rlibc;
 
+#[macro_use]
+mod macros;
+
 pub mod data_types;
 pub mod guid;
 pub mod protocol;
@@ -14,11 +17,25 @@ use crate::data_types::{EfiHandle, EfiStatus};
 use crate::table::EfiSystemTable;
 use core::panic::PanicInfo;
 
+static mut IMAGE_HANDLE: EfiHandle = EfiHandle(core::ptr::null());
+static mut SYSTEM_TABLE: *mut EfiSystemTable = 0 as *mut EfiSystemTable;
+
+pub fn system_table() -> &'static EfiSystemTable {
+    // Safety: We assume the system table has been set
+    unsafe { &*SYSTEM_TABLE }
+}
+
 /// The main entry point for the UEFI application.
 #[no_mangle]
-fn efi_main(_image_handle: EfiHandle, system_table: EfiSystemTable) -> EfiStatus {
+fn efi_main(image_handle: EfiHandle, system_table: &'static mut EfiSystemTable) -> EfiStatus {
+    unsafe {
+        IMAGE_HANDLE = image_handle;
+        SYSTEM_TABLE = system_table;
+    }
+
     system_table.con_out().reset(false);
-    system_table.con_out().output_rust_string("Hello World!");
+
+    println!("Hello World!");
 
     // Loop forever
     loop {}

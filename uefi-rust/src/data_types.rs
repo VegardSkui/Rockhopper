@@ -18,7 +18,7 @@ pub struct EfiGuid(pub u32, pub u16, pub u16, pub [u8; 8]);
 pub struct EfiStatus(pub usize);
 
 #[repr(transparent)]
-pub struct EfiHandle(*const c_void);
+pub struct EfiHandle(pub *const c_void);
 
 #[repr(transparent)]
 pub struct EfiEvent(*const c_void);

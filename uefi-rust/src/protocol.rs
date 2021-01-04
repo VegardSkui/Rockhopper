@@ -55,20 +55,6 @@ impl EfiSimpleTextOutputProtocol {
     pub fn output_string(&mut self, string: &Char16) -> EfiStatus {
         (self.output_string)(self, string)
     }
-
-    pub fn output_rust_string(&mut self, string: &str) -> EfiStatus {
-        // Output the string one character at a time
-        for c in string.chars() {
-            self.output_string(&[Char16(c as u16), Char16(0)][0]);
-
-            // Carriage returns are required for proper newlines in UEFI
-            if c == '\n' {
-                self.output_string(&[Char16('\r' as u16), Char16(0)][0]);
-            }
-        }
-        // TODO: Propagate any non-success EfiStatus encountered while printing
-        EfiStatus(0)
-    }
 }
 
 #[repr(C)]
