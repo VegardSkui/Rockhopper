@@ -37,12 +37,18 @@ fn efi_main(image_handle: EfiHandle, system_table: &'static mut EfiSystemTable) 
 
     println!("Hello World!");
 
-    // Loop forever
-    loop {}
+    hang()
 }
 
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! {
-    // TODO: Print info
-    loop {}
+    hang()
+}
+
+/// Halt the CPU forever.
+#[inline]
+pub fn hang() -> ! {
+    loop {
+        unsafe { asm!("hlt") }
+    }
 }
