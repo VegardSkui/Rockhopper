@@ -4,8 +4,8 @@ use crate::data_types::{Char16, EfiEvent, EfiStatus};
 /// input.
 #[repr(C)]
 pub struct EfiSimpleTextInputProtocol {
-    reset: extern "efiapi" fn(&EfiSimpleTextInputProtocol, bool) -> EfiStatus,
-    read_key_stroke: extern "efiapi" fn(&EfiSimpleTextInputProtocol, &mut EfiInputKey) -> EfiStatus,
+    reset: extern "efiapi" fn(&Self, bool) -> EfiStatus,
+    read_key_stroke: extern "efiapi" fn(&Self, &mut EfiInputKey) -> EfiStatus,
     wait_for_key: EfiEvent,
 }
 
@@ -18,32 +18,20 @@ pub struct EfiInputKey {
 /// Protocol interfaces for devices that support console style text displaying.
 #[repr(C)]
 pub struct EfiSimpleTextOutputProtocol {
-    reset: extern "efiapi" fn(
-        this: &EfiSimpleTextOutputProtocol,
-        extended_verification: bool,
-    ) -> EfiStatus,
-    output_string:
-        extern "efiapi" fn(this: &EfiSimpleTextOutputProtocol, string: &Char16) -> EfiStatus,
-    test_string:
-        extern "efiapi" fn(this: &EfiSimpleTextOutputProtocol, string: &Char16) -> EfiStatus,
+    reset: extern "efiapi" fn(this: &Self, extended_verification: bool) -> EfiStatus,
+    output_string: extern "efiapi" fn(this: &Self, string: &Char16) -> EfiStatus,
+    test_string: extern "efiapi" fn(this: &Self, string: &Char16) -> EfiStatus,
     query_mode: extern "efiapi" fn(
-        this: &EfiSimpleTextOutputProtocol,
+        this: &Self,
         mode_number: usize,
         columns: &mut usize,
         rows: &mut usize,
     ) -> EfiStatus,
-    set_mode:
-        extern "efiapi" fn(this: &EfiSimpleTextOutputProtocol, mode_mumber: usize) -> EfiStatus,
-    set_attribute:
-        extern "efiapi" fn(this: &EfiSimpleTextOutputProtocol, attribute: usize) -> EfiStatus,
-    clear_screen: extern "efiapi" fn(this: &EfiSimpleTextOutputProtocol) -> EfiStatus,
-    set_cursor_position: extern "efiapi" fn(
-        this: &EfiSimpleTextOutputProtocol,
-        column: usize,
-        row: usize,
-    ) -> EfiStatus,
-    enable_cursor:
-        extern "efiapi" fn(this: &EfiSimpleTextOutputProtocol, visible: bool) -> EfiStatus,
+    set_mode: extern "efiapi" fn(this: &Self, mode_mumber: usize) -> EfiStatus,
+    set_attribute: extern "efiapi" fn(this: &Self, attribute: usize) -> EfiStatus,
+    clear_screen: extern "efiapi" fn(this: &Self) -> EfiStatus,
+    set_cursor_position: extern "efiapi" fn(this: &Self, column: usize, row: usize) -> EfiStatus,
+    enable_cursor: extern "efiapi" fn(this: &Self, visible: bool) -> EfiStatus,
     mode: *const EfiSimpleTextOutputMode,
 }
 
