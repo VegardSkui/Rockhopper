@@ -1,4 +1,4 @@
-use crate::data_types::{EfiStatus, EfiEvent};
+use crate::data_types::{EfiEvent, EfiStatus};
 
 /// Protocol interfaces for devices that support simple console style text
 /// input.

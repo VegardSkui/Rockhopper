@@ -1,6 +1,6 @@
 use crate::data_types::{
-    Char16, EfiAllocateType, EfiGuid, EfiHandle, EfiMemoryType, EfiPhysicalAddress, EfiStatus,
-    EfiTpl,
+    Char16, EfiAllocateType, EfiGuid, EfiHandle, EfiMemoryDescriptor, EfiMemoryType,
+    EfiPhysicalAddress, EfiStatus, EfiTpl,
 };
 use crate::protocol::{EfiSimpleTextInputProtocol, EfiSimpleTextOutputProtocol};
 use core::ffi::c_void;
@@ -74,10 +74,16 @@ pub struct EfiBootServices {
         pages: usize,
         memory: &mut EfiPhysicalAddress,
     ) -> EfiStatus,
-    free_pages: extern "efiapi" fn(),     // TODO
-    get_memory_map: extern "efiapi" fn(), // TODO
-    allocate_pool: extern "efiapi" fn(),  // TODO
-    free_pool: extern "efiapi" fn(),      // TODO
+    free_pages: extern "efiapi" fn(), // TODO
+    get_memory_map: extern "efiapi" fn(
+        memory_map_size: &mut usize,
+        memory_map: *mut EfiMemoryDescriptor,
+        map_key: &mut usize,
+        descriptor_size: &mut usize,
+        descriptor_version: &mut u32,
+    ) -> EfiStatus,
+    allocate_pool: extern "efiapi" fn(), // TODO
+    free_pool: extern "efiapi" fn(),     // TODO
 
     // Event & Timer Services
     create_event: extern "efiapi" fn(),   // TODO
@@ -122,7 +128,11 @@ pub struct EfiBootServices {
     // Library Services
     protocols_per_handle: extern "efiapi" fn(), // TODO
     locate_handle_buffer: extern "efiapi" fn(), // TODO
-    locate_protocol: extern "efiapi" fn(),      // TODO
+    locate_protocol: extern "efiapi" fn(
+        protocol: &EfiGuid,
+        registration: *mut c_void,
+        interface: &mut *mut c_void,
+    ) -> EfiStatus,
     install_multiple_protocol_interfaces: extern "efiapi" fn(), // TODO
     uninstall_multiple_protocol_interfaces: extern "efiapi" fn(), // TODO
 
@@ -136,8 +146,44 @@ pub struct EfiBootServices {
 }
 
 impl EfiBootServices {
+    pub fn allocate_pages(
+        &self,
+        type1: EfiAllocateType,
+        memory_type: EfiMemoryType,
+        pages: usize,
+        memory: &mut EfiPhysicalAddress,
+    ) -> EfiStatus {
+        (self.allocate_pages)(type1, memory_type, pages, memory)
+    }
+
+    pub fn get_memory_map(
+        &self,
+        memory_map_size: &mut usize,
+        memory_map: *mut EfiMemoryDescriptor,
+        map_key: &mut usize,
+        descriptor_size: &mut usize,
+        descriptor_version: &mut u32,
+    ) -> EfiStatus {
+        (self.get_memory_map)(
+            memory_map_size,
+            memory_map,
+            map_key,
+            descriptor_size,
+            descriptor_version,
+        )
+    }
+
     pub fn stall(&self, microseconds: usize) -> EfiStatus {
         (self.stall)(microseconds)
+    }
+
+    pub fn locate_protocol(
+        &self,
+        protocol: &EfiGuid,
+        registration: *mut c_void,
+        interface: &mut *mut c_void,
+    ) -> EfiStatus {
+        (self.locate_protocol)(protocol, registration, interface)
     }
 }
 
