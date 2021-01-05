@@ -38,9 +38,16 @@ impl EfiStatus {
     pub const EFI_WARN_RESET_REQUIRED: EfiStatus = EfiStatus(7);
 
     // Error Codes
+    pub const EFI_LOAD_ERROR: EfiStatus = EfiStatus(Self::ERROR_BIT | 1);
     pub const EFI_INVALID_PARAMETER: EfiStatus = EfiStatus(Self::ERROR_BIT | 2);
+    pub const EFI_UNSUPPORTED: EfiStatus = EfiStatus(Self::ERROR_BIT | 3);
+    pub const EFI_BAD_BUFFER_SIZE: EfiStatus = EfiStatus(Self::ERROR_BIT | 4);
     pub const EFI_BUFFER_TOO_SMALL: EfiStatus = EfiStatus(Self::ERROR_BIT | 5);
+    pub const EFI_NOT_READY: EfiStatus = EfiStatus(Self::ERROR_BIT | 6);
+    pub const EFI_DEVICE_ERROR: EfiStatus = EfiStatus(Self::ERROR_BIT | 7);
+    pub const EFI_WRITE_PROTECTED: EfiStatus = EfiStatus(Self::ERROR_BIT | 8);
     pub const EFI_OUT_OF_RESOURCES: EfiStatus = EfiStatus(Self::ERROR_BIT | 9);
+    pub const EFI_VOLUME_CORRUPTED: EfiStatus = EfiStatus(Self::ERROR_BIT | 10);
 }
 
 impl fmt::Debug for EfiStatus {
@@ -59,9 +66,16 @@ impl fmt::Debug for EfiStatus {
             Self::EFI_WARN_RESET_REQUIRED => write!(f, "EFI_WARN_RESET_REQUIRED"),
 
             // Error Codes
+            Self::EFI_LOAD_ERROR => write!(f, "EFI_LOAD_ERROR"),
             Self::EFI_INVALID_PARAMETER => write!(f, "EFI_INVALID_PARAMETER"),
+            Self::EFI_UNSUPPORTED => write!(f, "EFI_UNSUPPORTED"),
+            Self::EFI_BAD_BUFFER_SIZE => write!(f, "EFI_BAD_BUFFER_SIZE"),
             Self::EFI_BUFFER_TOO_SMALL => write!(f, "EFI_BUFFER_TOO_SMALL"),
+            Self::EFI_NOT_READY => write!(f, "EFI_NOT_READY"),
+            Self::EFI_DEVICE_ERROR => write!(f, "EFI_DEVICE_ERROR"),
+            Self::EFI_WRITE_PROTECTED => write!(f, "EFI_WRITE_PROTECTED"),
             Self::EFI_OUT_OF_RESOURCES => write!(f, "EFI_OUT_OF_RESOURCES"),
+            Self::EFI_VOLUME_CORRUPTED => write!(f, "EFI_VOLUME_CORRUPTED"),
 
             // Unknown Codes
             Self(unknown) => write!(f, "EfiStatus({})", unknown),
