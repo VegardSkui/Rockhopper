@@ -2,8 +2,6 @@
 #![no_main]
 #![feature(asm)]
 
-extern crate rlibc;
-
 use rk_uefi::{print, println};
 use rk_uefi::data_types::{EfiHandle, EfiStatus};
 use rk_uefi::table::EfiSystemTable;
