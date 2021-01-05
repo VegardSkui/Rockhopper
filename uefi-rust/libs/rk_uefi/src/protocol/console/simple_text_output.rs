@@ -1,19 +1,4 @@
-use crate::data_types::{Char16, EfiEvent, EfiStatus};
-
-/// Protocol interfaces for devices that support simple console style text
-/// input.
-#[repr(C)]
-pub struct EfiSimpleTextInputProtocol {
-    reset: extern "efiapi" fn(&Self, bool) -> EfiStatus,
-    read_key_stroke: extern "efiapi" fn(&Self, &mut EfiInputKey) -> EfiStatus,
-    wait_for_key: EfiEvent,
-}
-
-#[repr(C)]
-pub struct EfiInputKey {
-    scan_code: u16,
-    unicode_char: u16,
-}
+use crate::data_types::{Char16, EfiStatus};
 
 /// Protocol interfaces for devices that support console style text displaying.
 #[repr(C)]
@@ -27,7 +12,7 @@ pub struct EfiSimpleTextOutputProtocol {
         columns: &mut usize,
         rows: &mut usize,
     ) -> EfiStatus,
-    set_mode: extern "efiapi" fn(this: &Self, mode_mumber: usize) -> EfiStatus,
+    set_mode: extern "efiapi" fn(this: &Self, mode_number: usize) -> EfiStatus,
     set_attribute: extern "efiapi" fn(this: &Self, attribute: usize) -> EfiStatus,
     clear_screen: extern "efiapi" fn(this: &Self) -> EfiStatus,
     set_cursor_position: extern "efiapi" fn(this: &Self, column: usize, row: usize) -> EfiStatus,
