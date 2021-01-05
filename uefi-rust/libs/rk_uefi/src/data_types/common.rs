@@ -15,7 +15,7 @@ pub struct Char16(pub u16);
 #[repr(C)]
 pub struct EfiGuid(pub u32, pub u16, pub u16, pub [u8; 8]);
 
-#[derive(PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 #[repr(transparent)]
 pub struct EfiStatus(usize);
 
@@ -24,6 +24,12 @@ impl EfiStatus {
     ///
     /// This implementation assumes a 64-bit system.
     const ERROR_BIT: usize = 1 << 63;
+
+    /// Returns whether the status code indicates an error.
+    pub fn is_error(self) -> bool {
+        // Check if the error bit is set
+        self.0 & Self::ERROR_BIT != 0
+    }
 
     // Success Codes
     pub const EFI_SUCCESS: EfiStatus = EfiStatus(0);
