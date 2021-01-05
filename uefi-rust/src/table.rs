@@ -109,6 +109,30 @@ pub struct EfiBootServices {
     get_next_monotonix_count: extern "efiapi" fn(), // TODO
     stall: extern "efiapi" fn(microseconds: usize) -> EfiStatus, // TODO
     set_watchdog_timer: extern "efiapi" fn(),       // TODO
+
+    // DriverSupport Services
+    connect_controller: extern "efiapi" fn(),    // TODO
+    disconnect_controller: extern "efiapi" fn(), // TODO
+
+    // Open and Close Protocol Services
+    open_protocol: extern "efiapi" fn(),             // TODO
+    close_protocol: extern "efiapi" fn(),            // TODO
+    open_protocol_information: extern "efiapi" fn(), // TODO
+
+    // Library Services
+    protocols_per_handle: extern "efiapi" fn(), // TODO
+    locate_handle_buffer: extern "efiapi" fn(), // TODO
+    locate_protocol: extern "efiapi" fn(),      // TODO
+    install_multiple_protocol_interfaces: extern "efiapi" fn(), // TODO
+    uinstall_multiple_protocol_interfaces: extern "efiapi" fn(), // TODO
+
+    // 32-bit CRC Services
+    calculate_crc32: extern "efiapi" fn(), // TODO
+
+    // Miscellaneous Services
+    copy_mem: extern "efiapi" fn(),        // TODO
+    set_mem: extern "efiapi" fn(),         // TODO
+    create_event_ex: extern "efiapi" fn(), // TODO
 }
 
 impl EfiBootServices {
