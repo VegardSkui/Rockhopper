@@ -106,7 +106,7 @@ pub struct EfiBootServices {
     exit_boot_services: extern "efiapi" fn(), // TODO
 
     // Miscellaneous Services
-    get_next_monotonix_count: extern "efiapi" fn(), // TODO
+    get_next_monotonic_count: extern "efiapi" fn(), // TODO
     stall: extern "efiapi" fn(microseconds: usize) -> EfiStatus, // TODO
     set_watchdog_timer: extern "efiapi" fn(),       // TODO
 
@@ -124,7 +124,7 @@ pub struct EfiBootServices {
     locate_handle_buffer: extern "efiapi" fn(), // TODO
     locate_protocol: extern "efiapi" fn(),      // TODO
     install_multiple_protocol_interfaces: extern "efiapi" fn(), // TODO
-    uinstall_multiple_protocol_interfaces: extern "efiapi" fn(), // TODO
+    uninstall_multiple_protocol_interfaces: extern "efiapi" fn(), // TODO
 
     // 32-bit CRC Services
     calculate_crc32: extern "efiapi" fn(), // TODO
