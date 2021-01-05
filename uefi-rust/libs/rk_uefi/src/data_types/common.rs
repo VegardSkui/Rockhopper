@@ -48,6 +48,29 @@ impl EfiStatus {
     pub const EFI_WRITE_PROTECTED: EfiStatus = EfiStatus(Self::ERROR_BIT | 8);
     pub const EFI_OUT_OF_RESOURCES: EfiStatus = EfiStatus(Self::ERROR_BIT | 9);
     pub const EFI_VOLUME_CORRUPTED: EfiStatus = EfiStatus(Self::ERROR_BIT | 10);
+    pub const EFI_VOLUME_FULL: EfiStatus = EfiStatus(Self::ERROR_BIT | 11);
+    pub const EFI_NO_MEDIA: EfiStatus = EfiStatus(Self::ERROR_BIT | 12);
+    pub const EFI_MEDIA_CHANGED: EfiStatus = EfiStatus(Self::ERROR_BIT | 13);
+    pub const EFI_NOT_FOUND: EfiStatus = EfiStatus(Self::ERROR_BIT | 14);
+    pub const EFI_ACCESS_DENIED: EfiStatus = EfiStatus(Self::ERROR_BIT | 15);
+    pub const EFI_NO_RESPONSE: EfiStatus = EfiStatus(Self::ERROR_BIT | 16);
+    pub const EFI_NO_MAPPING: EfiStatus = EfiStatus(Self::ERROR_BIT | 17);
+    pub const EFI_TIMEOUT: EfiStatus = EfiStatus(Self::ERROR_BIT | 18);
+    pub const EFI_NOT_STARTED: EfiStatus = EfiStatus(Self::ERROR_BIT | 19);
+    pub const EFI_ALREADY_STARTED: EfiStatus = EfiStatus(Self::ERROR_BIT | 20);
+    pub const EFI_ABORTED: EfiStatus = EfiStatus(Self::ERROR_BIT | 21);
+    pub const EFI_ICMP_ERROR: EfiStatus = EfiStatus(Self::ERROR_BIT | 22);
+    pub const EFI_TFTP_ERROR: EfiStatus = EfiStatus(Self::ERROR_BIT | 23);
+    pub const EFI_PROTOCOL_ERROR: EfiStatus = EfiStatus(Self::ERROR_BIT | 24);
+    pub const EFI_INCOMPATIBLE_VERSION: EfiStatus = EfiStatus(Self::ERROR_BIT | 25);
+    pub const EFI_SECURITY_VIOLATION: EfiStatus = EfiStatus(Self::ERROR_BIT | 26);
+    pub const EFI_CRC_ERROR: EfiStatus = EfiStatus(Self::ERROR_BIT | 27);
+    pub const EFI_END_OF_MEDIA: EfiStatus = EfiStatus(Self::ERROR_BIT | 28);
+    pub const EFI_END_OF_FILE: EfiStatus = EfiStatus(Self::ERROR_BIT | 31);
+    pub const EFI_INVALID_LANGUAGE: EfiStatus = EfiStatus(Self::ERROR_BIT | 32);
+    pub const EFI_COMPROMISED_DATA: EfiStatus = EfiStatus(Self::ERROR_BIT | 33);
+    pub const EFI_IP_ADDRESS_CONFLICT: EfiStatus = EfiStatus(Self::ERROR_BIT | 34);
+    pub const EFI_HTTP_ERROR: EfiStatus = EfiStatus(Self::ERROR_BIT | 35);
 }
 
 impl fmt::Debug for EfiStatus {
@@ -76,6 +99,29 @@ impl fmt::Debug for EfiStatus {
             Self::EFI_WRITE_PROTECTED => write!(f, "EFI_WRITE_PROTECTED"),
             Self::EFI_OUT_OF_RESOURCES => write!(f, "EFI_OUT_OF_RESOURCES"),
             Self::EFI_VOLUME_CORRUPTED => write!(f, "EFI_VOLUME_CORRUPTED"),
+            Self::EFI_VOLUME_FULL => write!(f, "EFI_VOLUME_FULL"),
+            Self::EFI_NO_MEDIA => write!(f, "EFI_NO_MEDIA"),
+            Self::EFI_MEDIA_CHANGED => write!(f, "EFI_MEDIA_CHANGED"),
+            Self::EFI_NOT_FOUND => write!(f, "EFI_NOT_FOUND"),
+            Self::EFI_ACCESS_DENIED => write!(f, "EFI_ACCESS_DENIED"),
+            Self::EFI_NO_RESPONSE => write!(f, "EFI_NO_RESPONSE"),
+            Self::EFI_NO_MAPPING => write!(f, "EFI_NO_MAPPING"),
+            Self::EFI_TIMEOUT => write!(f, "EFI_TIMEOUT"),
+            Self::EFI_NOT_STARTED => write!(f, "EFI_NOT_STARTED"),
+            Self::EFI_ALREADY_STARTED => write!(f, "EFI_ALREADY_STARTED"),
+            Self::EFI_ABORTED => write!(f, "EFI_ABORTED"),
+            Self::EFI_ICMP_ERROR => write!(f, "EFI_ICMP_ERROR"),
+            Self::EFI_TFTP_ERROR => write!(f, "EFI_TFTP_ERROR"),
+            Self::EFI_PROTOCOL_ERROR => write!(f, "EFI_PROTOCOL_ERROR"),
+            Self::EFI_INCOMPATIBLE_VERSION => write!(f, "EFI_INCOMPATIBLE_VERSION"),
+            Self::EFI_SECURITY_VIOLATION => write!(f, "EFI_SECURITY_VIOLATION"),
+            Self::EFI_CRC_ERROR => write!(f, "EFI_CRC_ERROR"),
+            Self::EFI_END_OF_MEDIA => write!(f, "EFI_END_OF_MEDIA"),
+            Self::EFI_END_OF_FILE => write!(f, "EFI_END_OF_FILE"),
+            Self::EFI_INVALID_LANGUAGE => write!(f, "EFI_INVALID_LANGUAGE"),
+            Self::EFI_COMPROMISED_DATA => write!(f, "EFI_COMPROMISED_DATA"),
+            Self::EFI_IP_ADDRESS_CONFLICT => write!(f, "EFI_IP_ADDRESS_CONFLICT"),
+            Self::EFI_HTTP_ERROR => write!(f, "EFI_HTTP_ERROR"),
 
             // Unknown Codes
             Self(unknown) => write!(f, "EfiStatus({})", unknown),
