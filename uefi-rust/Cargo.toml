@@ -7,3 +7,4 @@ publish = false
 
 [dependencies]
 "rlibc" = "1.0.0"
+"rk_uefi" = { path = "libs/rk_uefi" }
