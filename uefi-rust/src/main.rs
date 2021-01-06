@@ -2,15 +2,17 @@
 #![no_main]
 #![feature(asm)]
 
+use core::convert::TryInto;
 use core::panic::PanicInfo;
-use rk_uefi::data_types::{EfiHandle, EfiMemoryType, EfiStatus};
+use rk_uefi::data_types::{Char16, EfiHandle, EfiMemoryType, EfiStatus};
 use rk_uefi::guid::{
     EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID, EFI_LOADED_IMAGE_PROTOCOL_GUID,
     EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID,
 };
 use rk_uefi::protocol::{
     EfiFileProtocol, EfiFileSystemInfo, EfiGraphicsOutputProtocol, EfiLoadedImageProtocol,
-    EfiSimpleFileSystemProtocol, EFI_FILE_SYSTEM_INFO_ID,
+    EfiSimpleFileSystemProtocol, EFI_FILE_HIDDEN, EFI_FILE_MODE_READ, EFI_FILE_READ_ONLY,
+    EFI_FILE_SYSTEM, EFI_FILE_SYSTEM_INFO_ID,
 };
 use rk_uefi::table::EfiSystemTable;
 use rk_uefi::{print, println, system_table};
@@ -58,6 +60,8 @@ fn efi_main(image_handle: EfiHandle, system_table: &'static mut EfiSystemTable) 
         .output_string(&file_info.volume_label[0]);
     println!("");
 
+    read_test_file(image_handle);
+
     println!("\nStalling for 1 second");
     rk_uefi::system_table().boot_services().stall(1_000_000);
     println!("Done!");
@@ -82,28 +86,84 @@ pub fn hang() -> ! {
 
 fn get_volume_root(image: EfiHandle) -> *mut EfiFileProtocol {
     let mut ptr1 = core::ptr::null_mut();
-    let s1 = system_table().boot_services().handle_protocol(
+    system_table().boot_services().handle_protocol(
         image,
         &EFI_LOADED_IMAGE_PROTOCOL_GUID,
         &mut ptr1,
     );
     let loaded_image = unsafe { &*(ptr1 as *mut EfiLoadedImageProtocol) };
-    println!("LOADED IMAGE STATUS = {:?}", s1);
 
     let mut ptr2 = core::ptr::null_mut();
-    let s2 = system_table().boot_services().handle_protocol(
+    system_table().boot_services().handle_protocol(
         loaded_image.device_handle(),
         &EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID,
         &mut ptr2,
     );
     let volume = unsafe { &*(ptr2 as *mut EfiSimpleFileSystemProtocol) };
-    println!("SIMPLE FILE SYSTEM STATUS = {:?}", s2);
 
     let mut ptr3 = core::ptr::null_mut();
-    let s3 = volume.open_volume(&mut ptr3);
-    println!("OPEN VOLUME STATUS = {:?}", s3);
-
+    volume.open_volume(&mut ptr3);
     ptr3
+}
+
+fn read_test_file(image: EfiHandle) {
+    let root = unsafe { get_volume_root(image).as_ref().unwrap() };
+
+    const TEST_FILE_NAME: [Char16; 9] = [
+        Char16(0x0054),
+        Char16(0x0045),
+        Char16(0x0053),
+        Char16(0x0054),
+        Char16(0x002e),
+        Char16(0x0054),
+        Char16(0x0058),
+        Char16(0x0054),
+        Char16(0x0),
+    ];
+
+    // Print the name of the file
+    print!("\nLoading File ");
+    system_table().con_out().output_string(&TEST_FILE_NAME[0]);
+    print!("\n");
+
+    let mut ptr = core::ptr::null_mut();
+    let s1 = root.open(
+        &mut ptr,
+        &TEST_FILE_NAME[0],
+        EFI_FILE_MODE_READ,
+        EFI_FILE_READ_ONLY | EFI_FILE_HIDDEN | EFI_FILE_SYSTEM,
+    );
+    if s1.is_error() {
+        panic!("Could not open file: {:?}", s1);
+    }
+    let file_handle = unsafe { &*(ptr as *const EfiFileProtocol) };
+
+    let file_size = file_handle.file_size().expect("Could not get file size");
+    println!("File Size = {} bytes", file_size);
+
+    // Read
+    let mut size: usize = file_size.try_into().unwrap();
+    let buffer = system_table()
+        .boot_services()
+        .allocate_pool(EfiMemoryType::EfiLoaderData, size)
+        .expect("Could not allocate read buffer");
+    let rs = file_handle.read(&mut size, unsafe { &mut *buffer });
+    println!("Read status = {:?}", rs);
+    println!("Read size = {}", size);
+
+    // Close
+    let cs = file_handle.close();
+    println!("Close status = {:?}", cs);
+
+    // Print content
+    print!("PRINTING FILE CONTENTS ==");
+    system_table()
+        .con_out()
+        .output_string(unsafe { &*(buffer as *const Char16) });
+    println!("==");
+
+    let fs = system_table().boot_services().free_pool(buffer);
+    println!("Free buffer status = {:?}", fs);
 }
 
 #[allow(dead_code)]

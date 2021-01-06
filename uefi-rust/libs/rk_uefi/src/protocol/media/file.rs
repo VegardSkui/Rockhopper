@@ -1,4 +1,5 @@
-use crate::data_types::{Char16, EfiGuid, EfiStatus, EfiTime};
+use crate::data_types::{Char16, EfiGuid, EfiMemoryType, EfiStatus, EfiTime};
+use crate::system_table;
 use core::ffi::c_void;
 
 pub const EFI_FILE_MODE_READ: u64 = 1;
@@ -30,7 +31,13 @@ pub const EFI_FILE_SYSTEM_INFO_ID: EfiGuid = EfiGuid(
 #[repr(C)]
 pub struct EfiFileProtocol {
     revision: u64,
-    open: extern "efiapi" fn(),         // TODO
+    open: extern "efiapi" fn(
+        this: &Self,
+        new_handle: &mut *mut Self,
+        file_name: &Char16,
+        open_mode: u64,
+        attributes: u64,
+    ) -> EfiStatus,
     close: extern "efiapi" fn(this: &Self) -> EfiStatus,
     delete: extern "efiapi" fn(this: &Self) -> EfiStatus,
     read:
@@ -55,6 +62,17 @@ impl EfiFileProtocol {
         self.revision
     }
 
+    /// Opens or creates a new file.
+    pub fn open(
+        &self,
+        new_handle: &mut *mut Self,
+        file_name: &Char16,
+        open_mode: u64,
+        attributes: u64,
+    ) -> EfiStatus {
+        (self.open)(self, new_handle, file_name, open_mode, attributes)
+    }
+
     /// Closes the file.
     pub fn close(&self) -> EfiStatus {
         (self.close)(self)
@@ -77,6 +95,26 @@ impl EfiFileProtocol {
         buffer: &mut c_void,
     ) -> EfiStatus {
         (self.get_info)(self, information_type, buffer_size, buffer)
+    }
+}
+
+impl EfiFileProtocol {
+    /// Returns the size of the file in bytes.
+    pub fn file_size(&self) -> Result<u64, EfiStatus> {
+        let mut buffer_size: usize = 1024;
+        let buffer = system_table()
+            .boot_services()
+            .allocate_pool(EfiMemoryType::EfiLoaderData, buffer_size)
+            .expect("Could not allocate buffer");
+        let status = self.get_info(&EFI_FILE_INFO_ID, &mut buffer_size, unsafe { &mut *buffer });
+        if status.is_error() {
+            Err(status)
+        } else {
+            // Read the file and free the buffer memory before returning
+            let file_size = unsafe { &*(buffer as *const EfiFileInfo) }.file_size;
+            system_table().boot_services().free_pool(buffer);
+            Ok(file_size)
+        }
     }
 }
 

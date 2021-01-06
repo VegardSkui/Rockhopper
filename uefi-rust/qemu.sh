@@ -3,6 +3,7 @@ cargo build
 rm -rf disk
 mkdir -p disk/EFI/BOOT
 cp target/x86_64-unknown-uefi/debug/uefi-rust.efi disk/EFI/BOOT/BOOTX64.EFI
+cp test.txt disk/TEST.TXT
 qemu-system-x86_64 \
     -nodefaults \
     -cpu qemu64 \
