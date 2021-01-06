@@ -1,0 +1,5 @@
+/disk
+/target
+/OVMF_CODE-pure-efi.fd
+/OVMF_VARS-pure-efi.fd
+/rockhopper.x86_64.elf
