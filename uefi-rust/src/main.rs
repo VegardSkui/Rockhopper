@@ -3,13 +3,14 @@
 #![feature(asm)]
 
 use core::panic::PanicInfo;
-use rk_uefi::data_types::{EfiHandle, EfiStatus};
+use rk_uefi::data_types::{EfiHandle, EfiMemoryType, EfiStatus};
 use rk_uefi::guid::{
     EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID, EFI_LOADED_IMAGE_PROTOCOL_GUID,
     EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID,
 };
 use rk_uefi::protocol::{
-    EfiFileProtocol, EfiGraphicsOutputProtocol, EfiLoadedImageProtocol, EfiSimpleFileSystemProtocol,
+    EfiFileProtocol, EfiFileSystemInfo, EfiGraphicsOutputProtocol, EfiLoadedImageProtocol,
+    EfiSimpleFileSystemProtocol, EFI_FILE_SYSTEM_INFO_ID,
 };
 use rk_uefi::table::EfiSystemTable;
 use rk_uefi::{print, println, system_table};
@@ -37,9 +38,25 @@ fn efi_main(image_handle: EfiHandle, system_table: &'static mut EfiSystemTable) 
     let revision = rk_uefi::system_table().revision();
     println!("UEFI v{}.{}\n", (revision >> 16) as u16, revision as u16);
 
-    print_available_graphics_modes();
-
-    get_volume_root(image_handle);
+    // Print volume label
+    let root = unsafe { get_volume_root(image_handle).as_ref().unwrap() };
+    let mut buffer_size: usize = 1024; // This should be more than enough, and wasteful
+    let buffer = rk_uefi::system_table()
+        .boot_services()
+        .allocate_pool(EfiMemoryType::EfiLoaderData, buffer_size)
+        .expect("Could not allocate buffer");
+    let status = root.get_info(&EFI_FILE_SYSTEM_INFO_ID, &mut buffer_size, unsafe {
+        &mut *buffer
+    });
+    if status.is_error() {
+        panic!("ERROR! {:?}", status);
+    }
+    let file_info = unsafe { &*(buffer as *const EfiFileSystemInfo) };
+    print!("Volume Label: ");
+    rk_uefi::system_table()
+        .con_out()
+        .output_string(&file_info.volume_label[0]);
+    println!("");
 
     println!("\nStalling for 1 second");
     rk_uefi::system_table().boot_services().stall(1_000_000);
@@ -63,7 +80,7 @@ pub fn hang() -> ! {
     }
 }
 
-fn get_volume_root(image: EfiHandle) -> EfiFileProtocol {
+fn get_volume_root(image: EfiHandle) -> *mut EfiFileProtocol {
     let mut ptr1 = core::ptr::null_mut();
     let s1 = system_table().boot_services().handle_protocol(
         image,
@@ -84,12 +101,12 @@ fn get_volume_root(image: EfiHandle) -> EfiFileProtocol {
 
     let mut ptr3 = core::ptr::null_mut();
     let s3 = volume.open_volume(&mut ptr3);
-    let root = unsafe { &*(ptr3 as *mut EfiFileProtocol) };
     println!("OPEN VOLUME STATUS = {:?}", s3);
 
-    *root
+    ptr3
 }
 
+#[allow(dead_code)]
 fn print_available_graphics_modes() {
     let mut ptr = core::ptr::null_mut();
     let r1 = system_table().boot_services().locate_protocol(
