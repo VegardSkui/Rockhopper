@@ -29,8 +29,12 @@ pub struct EfiBootServices {
         descriptor_size: &mut usize,
         descriptor_version: &mut u32,
     ) -> EfiStatus,
-    allocate_pool: extern "efiapi" fn(), // TODO
-    free_pool: extern "efiapi" fn(),     // TODO
+    allocate_pool: extern "efiapi" fn(
+        pool_type: EfiMemoryType,
+        size: usize,
+        buffer: &mut *mut c_void,
+    ) -> EfiStatus,
+    free_pool: extern "efiapi" fn(buffer: *mut c_void) -> EfiStatus,
 
     // Event & Timer Services
     create_event: extern "efiapi" fn(),   // TODO
@@ -129,6 +133,30 @@ impl EfiBootServices {
             descriptor_size,
             descriptor_version,
         )
+    }
+
+    /// Allocates pool memory.
+    ///
+    /// Size in bytes.
+    pub fn allocate_pool(
+        &self,
+        pool_type: EfiMemoryType,
+        size: usize,
+    ) -> Result<*mut c_void, EfiStatus> {
+        let mut buffer_ptr = core::ptr::null_mut();
+        let status = (self.allocate_pool)(pool_type, size, &mut buffer_ptr);
+        if status.is_error() {
+            Err(status)
+        } else {
+            Ok(buffer_ptr)
+        }
+    }
+
+    /// Returns pool memory to the system.
+    ///
+    /// The buffer must have been allocated by `allocate_pool`.
+    pub fn free_pool(&self, buffer: *mut c_void) -> EfiStatus {
+        (self.free_pool)(buffer)
     }
 
     pub fn handle_protocol(
