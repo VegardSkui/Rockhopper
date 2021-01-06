@@ -97,7 +97,11 @@ pub struct EfiBootServices {
     install_protocol_interface: extern "efiapi" fn(), // TODO
     reinstall_protocol_interface: extern "efiapi" fn(), // TODO
     uninstall_protocol_interface: extern "efiapi" fn(), // TODO
-    handle_protocol: extern "efiapi" fn(),            // TODO
+    handle_protocol: extern "efiapi" fn(
+        handle: EfiHandle,
+        protocol: &EfiGuid,
+        interface: &mut *mut c_void,
+    ) -> EfiStatus,
     _reserved: *const c_void,
     register_protocol_notify: extern "efiapi" fn(), // TODO
     locate_handle: extern "efiapi" fn(),            // TODO
@@ -121,7 +125,14 @@ pub struct EfiBootServices {
     disconnect_controller: extern "efiapi" fn(), // TODO
 
     // Open and Close Protocol Services
-    open_protocol: extern "efiapi" fn(),             // TODO
+    open_protocol: extern "efiapi" fn(
+        handle: EfiHandle,
+        protocol: &EfiGuid,
+        interface: &mut *mut c_void,
+        agent_handle: EfiHandle,
+        controller_handle: EfiHandle,
+        attributes: u32,
+    ) -> EfiStatus,
     close_protocol: extern "efiapi" fn(),            // TODO
     open_protocol_information: extern "efiapi" fn(), // TODO
 
@@ -173,8 +184,36 @@ impl EfiBootServices {
         )
     }
 
+    pub fn handle_protocol(
+        &self,
+        handle: EfiHandle,
+        protocol: &EfiGuid,
+        interface: &mut *mut c_void,
+    ) -> EfiStatus {
+        (self.handle_protocol)(handle, protocol, interface)
+    }
+
     pub fn stall(&self, microseconds: usize) -> EfiStatus {
         (self.stall)(microseconds)
+    }
+
+    pub fn open_protocol(
+        &self,
+        handle: EfiHandle,
+        protocol: &EfiGuid,
+        interface: &mut *mut c_void,
+        agent_handle: EfiHandle,
+        controller_handle: EfiHandle,
+        attributes: u32,
+    ) -> EfiStatus {
+        (self.open_protocol)(
+            handle,
+            protocol,
+            interface,
+            agent_handle,
+            controller_handle,
+            attributes,
+        )
     }
 
     pub fn locate_protocol(

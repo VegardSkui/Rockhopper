@@ -135,6 +135,7 @@ impl fmt::Debug for EfiStatus {
     }
 }
 
+#[derive(Copy, Clone)]
 #[repr(transparent)]
 pub struct EfiHandle(pub *const c_void);
 
