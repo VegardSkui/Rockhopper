@@ -102,7 +102,7 @@ pub struct EfiBootServices {
     calculate_crc32: extern "efiapi" fn(), // TODO
 
     // Miscellaneous Services
-    copy_mem: extern "efiapi" fn(),        // TODO
+    copy_mem: extern "efiapi" fn(destination: *mut c_void, source: *mut c_void, length: usize),
     set_mem: extern "efiapi" fn(),         // TODO
     create_event_ex: extern "efiapi" fn(), // TODO
 }
@@ -198,5 +198,10 @@ impl EfiBootServices {
         interface: &mut *mut c_void,
     ) -> EfiStatus {
         (self.locate_protocol)(protocol, registration, interface)
+    }
+
+    /// Copies the contents of one buffer to another.
+    pub fn copy_mem(&self, destination: *mut c_void, source: *mut c_void, length: usize) {
+        (self.copy_mem)(destination, source, length)
     }
 }
