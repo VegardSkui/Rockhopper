@@ -6,6 +6,7 @@ edition = "2018"
 publish = false
 
 [dependencies]
+"rk_elf64" = { path = "libs/rk_elf64" }
 "rk_uefi" = { path = "libs/rk_uefi" }
 "rk_x86_64" = { path = "libs/rk_x86_64" }
 
