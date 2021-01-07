@@ -21,7 +21,7 @@ pub struct EfiBootServices {
         pages: usize,
         memory: &mut EfiPhysicalAddress,
     ) -> EfiStatus,
-    free_pages: extern "efiapi" fn(), // TODO
+    free_pages: extern "efiapi" fn(memory: EfiPhysicalAddress, pages: usize) -> EfiStatus,
     get_memory_map: extern "efiapi" fn(
         memory_map_size: &mut usize,
         memory_map: *mut EfiMemoryDescriptor,
@@ -116,6 +116,11 @@ impl EfiBootServices {
         memory: &mut EfiPhysicalAddress,
     ) -> EfiStatus {
         (self.allocate_pages)(type1, memory_type, pages, memory)
+    }
+
+    /// Frees memory pages.
+    pub fn free_pages(&self, memory: EfiPhysicalAddress, pages: usize) -> EfiStatus {
+        (self.free_pages)(memory, pages)
     }
 
     pub fn get_memory_map(
