@@ -66,22 +66,14 @@ fn efi_main(image_handle: EfiHandle, system_table: &'static mut EfiSystemTable) 
     rk_uefi::system_table().boot_services().stall(1_000_000);
     println!("Done!");
 
-    hang()
+    rk_x86_64::hang()
 }
 
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
     print!("{}", info);
 
-    hang()
-}
-
-/// Halt the CPU forever.
-#[inline]
-pub fn hang() -> ! {
-    loop {
-        unsafe { asm!("hlt") }
-    }
+    rk_x86_64::hang()
 }
 
 fn get_volume_root(image: EfiHandle) -> *mut EfiFileProtocol {

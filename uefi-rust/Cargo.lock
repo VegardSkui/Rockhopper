@@ -5,8 +5,13 @@ name = "rk_uefi"
 version = "0.1.0"
 
 [[package]]
+name = "rk_x86_64"
+version = "0.1.0"
+
+[[package]]
 name = "uefi-rust"
 version = "0.1.0"
 dependencies = [
  "rk_uefi",
+ "rk_x86_64",
 ]

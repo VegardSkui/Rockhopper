@@ -7,5 +7,6 @@ publish = false
 
 [dependencies]
 "rk_uefi" = { path = "libs/rk_uefi" }
+"rk_x86_64" = { path = "libs/rk_x86_64" }
 
 [workspace]
