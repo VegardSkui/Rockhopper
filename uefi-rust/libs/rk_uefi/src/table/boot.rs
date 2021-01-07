@@ -108,14 +108,20 @@ pub struct EfiBootServices {
 }
 
 impl EfiBootServices {
+    /// Allocates memory pages.
     pub fn allocate_pages(
         &self,
         type1: EfiAllocateType,
         memory_type: EfiMemoryType,
         pages: usize,
-        memory: &mut EfiPhysicalAddress,
-    ) -> EfiStatus {
-        (self.allocate_pages)(type1, memory_type, pages, memory)
+    ) -> Result<EfiPhysicalAddress, EfiStatus> {
+        let mut buffer_ptr = EfiPhysicalAddress(0);
+        let status = (self.allocate_pages)(type1, memory_type, pages, &mut buffer_ptr);
+        if status.is_error() {
+            Err(status)
+        } else {
+            Ok(buffer_ptr)
+        }
     }
 
     /// Frees memory pages.

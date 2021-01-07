@@ -27,7 +27,7 @@ pub enum EfiMemoryType {
 }
 
 #[repr(transparent)]
-pub struct EfiPhysicalAddress(u64);
+pub struct EfiPhysicalAddress(pub u64);
 
 #[repr(C)]
 pub struct EfiMemoryDescriptor {
