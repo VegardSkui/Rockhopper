@@ -60,11 +60,11 @@ pub struct EfiBootServices {
     install_configuration_table: extern "efiapi" fn(), // TODO
 
     // Image Services
-    load_image: extern "efiapi" fn(),         // TODO
-    start_image: extern "efiapi" fn(),        // TODO
-    exit: extern "efiapi" fn(),               // TODO
-    unload_image: extern "efiapi" fn(),       // TODO
-    exit_boot_services: extern "efiapi" fn(), // TODO
+    load_image: extern "efiapi" fn(),   // TODO
+    start_image: extern "efiapi" fn(),  // TODO
+    exit: extern "efiapi" fn(),         // TODO
+    unload_image: extern "efiapi" fn(), // TODO
+    exit_boot_services: extern "efiapi" fn(image_handle: EfiHandle, map_key: usize) -> EfiStatus,
 
     // Miscellaneous Services
     get_next_monotonic_count: extern "efiapi" fn(), // TODO
@@ -171,6 +171,11 @@ impl EfiBootServices {
         interface: &mut *mut c_void,
     ) -> EfiStatus {
         (self.handle_protocol)(handle, protocol, interface)
+    }
+
+    /// Terminates all boot services.
+    pub fn exit_boot_services(&self, image_handle: EfiHandle, map_key: usize) -> EfiStatus {
+        (self.exit_boot_services)(image_handle, map_key)
     }
 
     pub fn stall(&self, microseconds: usize) -> EfiStatus {
