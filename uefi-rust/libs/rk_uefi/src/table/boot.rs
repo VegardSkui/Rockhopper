@@ -165,7 +165,8 @@ impl EfiBootServices {
 
     /// Returns pool memory to the system.
     ///
-    /// The buffer must have been allocated by `allocate_pool`.
+    /// The buffer must have been allocated by
+    /// [allocate_pool](Self::allocate_pool).
     pub fn free_pool(&self, buffer: *mut c_void) -> EfiStatus {
         (self.free_pool)(buffer)
     }

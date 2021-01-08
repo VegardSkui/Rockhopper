@@ -41,6 +41,7 @@ impl EfiGraphicsOutputProtocol {
     }
 }
 
+#[derive(Copy, Clone)]
 #[repr(C)]
 pub struct EfiPixelBitmask {
     red_mask: u32,
@@ -49,7 +50,7 @@ pub struct EfiPixelBitmask {
     reserved_mask: u32,
 }
 
-#[derive(Debug)]
+#[derive(Copy, Clone)]
 #[repr(C)]
 pub enum EfiGraphicsPixelFormat {
     PixelRedGreenBlueReserved8BitPerColor,
@@ -59,6 +60,7 @@ pub enum EfiGraphicsPixelFormat {
     PixelFormatMax,
 }
 
+#[derive(Copy, Clone)]
 #[repr(C)]
 pub struct EfiGraphicsOutputModeInformation {
     version: u32,
@@ -73,8 +75,8 @@ pub struct EfiGraphicsOutputModeInformation {
 pub struct EfiGraphicsOutputProtocolMode {
     pub max_mode: u32,
     pub mode: u32,
-    info: *const EfiGraphicsOutputModeInformation,
+    pub info: *const EfiGraphicsOutputModeInformation,
     size_of_info: usize,
-    frame_buffer_base: EfiPhysicalAddress,
+    pub frame_buffer_base: EfiPhysicalAddress,
     frame_buffer_size: usize,
 }

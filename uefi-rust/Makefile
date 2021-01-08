@@ -1,0 +1,39 @@
+.PHONY: all disk qemu clean
+
+LIBS = $(shell find libs/*/src -type f)
+
+all: disk
+
+disk/EFI/BOOT/BOOTX64.EFI: $(shell find src -type f) $(LIBS)
+	mkdir -p disk/EFI/BOOT
+	cargo build
+	cp target/x86_64-unknown-uefi/debug/uefi-rust.efi disk/EFI/BOOT/BOOTX64.EFI
+
+disk/RK_KERNEL.ELF: $(shell find kernel/src -type f) $(LIBS)
+	mkdir -p disk
+	cd kernel && cargo build
+	cp kernel/target/x86_64-rockhopper/debug/rk_kernel disk/RK_KERNEL.ELF
+
+disk/TEST.TXT:
+	mkdir -p disk
+	cp test.txt disk/TEST.TXT
+
+disk: disk/EFI/BOOT/BOOTX64.EFI disk/RK_KERNEL.ELF disk/TEST.TXT
+
+qemu: disk
+	qemu-system-x86_64 \
+		-nodefaults \
+		-cpu qemu64 \
+		-drive if=pflash,format=raw,file=OVMF_CODE-pure-efi.fd,readonly=on \
+		-drive if=pflash,format=raw,file=OVMF_VARS-pure-efi.fd,readonly=on \
+		-drive format=raw,file=fat:rw:disk \
+		-serial file:serial \
+		-vga std \
+		-monitor stdio \
+		-d int -no-reboot -no-shutdown
+
+clean:
+	rm -rf disk
+	#rm -rf target
+	#rm -rf kernel/target
+	rm -f serial

@@ -2,3 +2,4 @@
 /target
 /OVMF_CODE-pure-efi.fd
 /OVMF_VARS-pure-efi.fd
+/serial
