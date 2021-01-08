@@ -11,3 +11,4 @@ publish = false
 "rk_x86_64" = { path = "libs/rk_x86_64" }
 
 [workspace]
+exclude = [ "kernel" ]

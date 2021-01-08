@@ -1,0 +1,6 @@
+[package]
+name = "rk_kernel"
+version = "0.1.0"
+authors = ["Vegard Skui <me@vegardskui.com>"]
+edition = "2018"
+publish = false
