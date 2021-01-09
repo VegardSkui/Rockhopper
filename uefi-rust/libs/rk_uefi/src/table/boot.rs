@@ -10,6 +10,8 @@ use core::ffi::c_void;
 pub struct EfiBootServices {
     hdr: EfiTableHeader,
 
+    // TODO: Mark unsafe functions.
+
     // Task Priority Services
     raise_tpl: extern "efiapi" fn(new_tpl: EfiTpl) -> EfiTpl,
     restore_tpl: extern "efiapi" fn(old_tpl: EfiTpl),
@@ -102,8 +104,9 @@ pub struct EfiBootServices {
     calculate_crc32: extern "efiapi" fn(), // TODO
 
     // Miscellaneous Services
-    copy_mem: extern "efiapi" fn(destination: *mut c_void, source: *mut c_void, length: usize),
-    set_mem: extern "efiapi" fn(),         // TODO
+    copy_mem:
+        unsafe extern "efiapi" fn(destination: *mut c_void, source: *mut c_void, length: usize),
+    set_mem: unsafe extern "efiapi" fn(),  // TODO
     create_event_ex: extern "efiapi" fn(), // TODO
 }
 
@@ -218,7 +221,10 @@ impl EfiBootServices {
     }
 
     /// Copies the contents of one buffer to another.
-    pub fn copy_mem(&self, destination: *mut c_void, source: *mut c_void, length: usize) {
+    ///
+    /// # Safety
+    /// Copying between arbitrary memory buffers is obviously unsafe.
+    pub unsafe fn copy_mem(&self, destination: *mut c_void, source: *mut c_void, length: usize) {
         (self.copy_mem)(destination, source, length)
     }
 }

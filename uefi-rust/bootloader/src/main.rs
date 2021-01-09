@@ -150,11 +150,13 @@ fn efi_main(image_handle: EfiHandle, system_table: &'static mut EfiSystemTable) 
             // Copy the loadable kernel section into the allocated space
             let destination = kernel_phys_addr.0 as *mut core::ffi::c_void;
             let source = (kernel_elf_addr.0 + ph.p_offset) as *mut core::ffi::c_void;
-            rk_uefi::system_table().boot_services().copy_mem(
-                destination,
-                source,
-                kernel_size as usize,
-            );
+            unsafe {
+                rk_uefi::system_table().boot_services().copy_mem(
+                    destination,
+                    source,
+                    kernel_size as usize,
+                );
+            }
 
             break;
         }

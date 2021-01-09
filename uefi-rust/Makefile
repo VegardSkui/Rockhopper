@@ -38,6 +38,9 @@ qemu: disk
 fmt:
 	cd bootloader && cargo fmt
 	cd kernel && cargo fmt
+	cd libs/rk_elf64 && cargo fmt
+	cd libs/rk_uefi && cargo fmt
+	cd libs/rk_x86_64 && cargo fmt
 
 clean:
 	rm -rf disk
