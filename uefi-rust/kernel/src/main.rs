@@ -3,6 +3,7 @@
 #![feature(asm)]
 
 mod graphics;
+mod terminal;
 
 use crate::graphics::Screen;
 use core::panic::PanicInfo;
@@ -36,6 +37,22 @@ fn _start() -> ! {
 
     // Clear the screen
     screen.clear();
+
+    // Initialize a new text terminal
+    let mut terminal = terminal::Terminal::new(screen);
+
+    // Print the digits
+    for c in 0..10 {
+        terminal.put_char(0x30 + c);
+    }
+    terminal.new_line();
+
+    // Print the letters of the alphabet in both upper and lower case
+    for c in 0..26 {
+        terminal.put_char(0x41 + c);
+        terminal.put_char(0x61 + c);
+        terminal.new_line();
+    }
 
     loop {}
 }

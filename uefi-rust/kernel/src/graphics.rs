@@ -1,3 +1,4 @@
+#[derive(Copy, Clone)]
 pub struct Screen {
     fb_base: u64,
     horizontal_resolution: u32,

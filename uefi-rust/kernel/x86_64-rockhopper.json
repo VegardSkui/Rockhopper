@@ -23,6 +23,6 @@
     "position-independent-executables": false,
     "has-elf-tls": true,
     "pre-link-args": {
-        "ld.lld": ["--script=./x86_64-rockhopper.ld"]
+        "ld.lld": ["--script=./x86_64-rockhopper.ld", "./font.o"]
     }
 }

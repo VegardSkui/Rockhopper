@@ -1,4 +1,4 @@
-.PHONY: all disk qemu clean
+.PHONY: all disk qemu fmt clean
 
 LIBS = $(shell find libs/*/src -type f)
 
@@ -9,7 +9,7 @@ disk/EFI/BOOT/BOOTX64.EFI: $(shell find src -type f) $(LIBS)
 	cargo build
 	cp target/x86_64-unknown-uefi/debug/uefi-rust.efi disk/EFI/BOOT/BOOTX64.EFI
 
-disk/RK_KERNEL.ELF: $(shell find kernel/src -type f) $(LIBS)
+disk/RK_KERNEL.ELF: $(shell find kernel/src -type f) $(LIBS) kernel/font.o
 	mkdir -p disk
 	cd kernel && cargo build
 	cp kernel/target/x86_64-rockhopper/debug/rk_kernel disk/RK_KERNEL.ELF
@@ -17,6 +17,9 @@ disk/RK_KERNEL.ELF: $(shell find kernel/src -type f) $(LIBS)
 disk/TEST.TXT:
 	mkdir -p disk
 	cp test.txt disk/TEST.TXT
+
+kernel/font.o: kernel/font.psf
+	cd kernel && llvm-objcopy --input-target binary --output-target elf64-x86-64 font.psf font.o
 
 disk: disk/EFI/BOOT/BOOTX64.EFI disk/RK_KERNEL.ELF disk/TEST.TXT
 
@@ -31,6 +34,10 @@ qemu: disk
 		-vga std \
 		-monitor stdio \
 		-d int -no-reboot -no-shutdown
+
+fmt:
+	cargo fmt
+	cd kernel && cargo fmt
 
 clean:
 	rm -rf disk
