@@ -1,7 +1,18 @@
 #![no_std]
 #![no_main]
+#![feature(asm)]
 
 use core::panic::PanicInfo;
+
+/// The data structure passed to the kernel on entry.
+#[repr(C)]
+pub struct EntryData {
+    greeting: u32,
+}
+
+extern "C" {
+    pub static entry_data: EntryData;
+}
 
 #[no_mangle]
 fn _start() -> ! {
@@ -12,6 +23,15 @@ fn _start() -> ! {
         unsafe {
             fb.offset(i).write_volatile(0x0000ff00);
         }
+    }
+
+    unsafe {
+        asm!("", in("r12") entry_data.greeting);
+        asm!("int3");
+        // Looking in the R12 register at the time of the INT3 exception we
+        // should see the value transferred from the bootloader. We'll also have
+        // a page fault and system crash since we haven't set up our interrupt
+        // table yet.
     }
 
     loop {}

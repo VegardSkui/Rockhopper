@@ -20,12 +20,23 @@ use rk_uefi::protocol::{
 use rk_uefi::table::EfiSystemTable;
 use rk_uefi::{print, println, system_table};
 
+/// The data structure passed to the kernel on entry.
+#[repr(C)]
+struct EntryData {
+    greeting: u32,
+}
+
+/// The amount of pages we will reserve for our own paging tables.
+const PAGING_PAGES_COUNT: usize = 10;
+
 /// The main entry point for the UEFI application.
 #[no_mangle]
 fn efi_main(image_handle: EfiHandle, system_table: &'static mut EfiSystemTable) -> EfiStatus {
     rk_uefi::init(image_handle, &mut *system_table);
 
     rk_uefi::system_table().con_out().reset(false);
+
+    let entry_data = EntryData { greeting: 0x1f427 };
 
     println!("Hello World!");
 
@@ -90,26 +101,29 @@ fn efi_main(image_handle: EfiHandle, system_table: &'static mut EfiSystemTable) 
     let kernel_elf_file_header = unsafe { *(kernel_elf_addr.0 as *const rk_elf64::FileHeader) };
     // TODO: Make sure we actually have a correct ELF file header (check magic
     // number and machine type at least).
-    if kernel_elf_file_header.e_phentsize != 0x38 {
-        panic!("Unexpected program header table entry size");
-    }
+    assert_eq!(
+        kernel_elf_file_header.e_phentsize, 0x38,
+        "Unexpected program header table entry size, found {}",
+        kernel_elf_file_header.e_phentsize
+    );
 
     let mut kernel_size: u64 = 0;
-    let mut kernel_addr = EfiPhysicalAddress(0);
+    let mut kernel_phys_addr = EfiPhysicalAddress(0);
+    let mut kernel_virt_addr: u64 = 0; // Where the kernel expects to be located
     let kernel_entry = kernel_elf_file_header.e_entry;
 
-    // Go through each program header
+    // Find the first loadable program header, we assume this to be our kernel
     let kernel_elf_program_header_table =
         (kernel_elf_addr.0 + kernel_elf_file_header.e_phoff) as *const rk_elf64::ProgramHeader;
     for i in 0..kernel_elf_file_header.e_phnum {
         let ph = unsafe { *kernel_elf_program_header_table.offset(i as isize) };
-        // Look for the section containing our kernel code
-        if ph.p_type == rk_elf64::ProgramType::PT_LOAD && ph.p_vaddr == 0xffff_ffff_f800_0000 {
+        if ph.p_type == rk_elf64::ProgramType::PT_LOAD {
             kernel_size = ph.p_filesz;
+            kernel_virt_addr = ph.p_vaddr;
 
             // Allocate memory for the kernel
             let pages = (kernel_size as usize + 4095) / 4096;
-            kernel_addr = rk_uefi::system_table()
+            kernel_phys_addr = rk_uefi::system_table()
                 .boot_services()
                 .allocate_pages(
                     EfiAllocateType::AllocateAnyPages,
@@ -119,7 +133,7 @@ fn efi_main(image_handle: EfiHandle, system_table: &'static mut EfiSystemTable) 
                 .expect("Could not allocate memory for the kernel");
 
             // Copy the loadable kernel section into the allocated space
-            let destination = kernel_addr.0 as *mut core::ffi::c_void;
+            let destination = kernel_phys_addr.0 as *mut core::ffi::c_void;
             let source = (kernel_elf_addr.0 + ph.p_offset) as *mut core::ffi::c_void;
             rk_uefi::system_table().boot_services().copy_mem(
                 destination,
@@ -137,8 +151,19 @@ fn efi_main(image_handle: EfiHandle, system_table: &'static mut EfiSystemTable) 
         panic!("Kernel cannot be larger than 2 MiB");
     }
     println!("kernel_size = {} bytes", kernel_size);
-    println!("kernel_addr = {:#x} (phys)", kernel_addr.0);
+    println!("kernel_phys_addr = {:#x} (phys)", kernel_phys_addr.0);
+    println!("kernel_virt_addr = {:#x} (virt)", kernel_virt_addr);
     println!("kernel_entry = {:#x} (virt)", kernel_entry);
+
+    // Allocate a page for the entry data
+    let entry_data_page_addr = rk_uefi::system_table()
+        .boot_services()
+        .allocate_pages(
+            EfiAllocateType::AllocateAnyPages,
+            EfiMemoryType::EfiLoaderData,
+            1,
+        )
+        .expect("Could not allocate memory page for entry data");
 
     // Get the memory map
     // We don't actually pass or use it yet, but we need the map key to exit boot
@@ -191,14 +216,24 @@ fn efi_main(image_handle: EfiHandle, system_table: &'static mut EfiSystemTable) 
         .boot_services()
         .exit_boot_services(image_handle, map_key);
 
+    // Write the entry data to memory
+    unsafe {
+        core::ptr::write(entry_data_page_addr.0 as *mut EntryData, entry_data);
+    }
+
     // Create new page tables for our higher half kernel
     unsafe {
-        // Zero out space for 5 paging tables
-        core::ptr::write_bytes(0x70000 as *mut u8, 0, 5 * 4096);
+        // TODO: It's not safe to assume the space at 0x70000- to be free for us to use
+        // for page tables
+
+        // Zeroes out the pages we'll use for paging tables
+        core::ptr::write_bytes(0x70000 as *mut u8, 0, PAGING_PAGES_COUNT * 4096);
+
+        // Keeps track of the next free memory page we can use for our page tables
+        let mut next_paging_page: usize = 2; // We'll use the first two now
 
         // PML4
         core::ptr::write(0x70000 as *mut u64, 0x71000 | 0b11);
-        core::ptr::write((0x70000 + 511 * 8) as *mut u64, 0x72000 | 0b11);
 
         // Identity map the first 4 GiB using three PDP huge pages
         core::ptr::write(0x71000 as *mut u64, 0b1000_0011);
@@ -206,23 +241,24 @@ fn efi_main(image_handle: EfiHandle, system_table: &'static mut EfiSystemTable) 
         core::ptr::write((0x71000 + 2 * 8) as *mut u64, 0x8000_0000 | 0b1000_0011);
         core::ptr::write((0x71000 + 3 * 8) as *mut u64, 0xc000_0000 | 0b1000_0011);
 
-        // PDP
-        core::ptr::write((0x72000 + 511 * 8) as *mut u64, 0x73000 | 0b11);
-
-        // PD
-        // We can't just use a single huge page to map the 2 MiB because we cannot
-        // guarantee that the memory UEFI allocated to us for the kernel is 2
-        // MiB-aligned, we can only guarantee the normal 4096 byte page-alignment.
-        core::ptr::write((0x73000 + (0o700 * 8)) as *mut u64, 0x74000 | 0b11);
-
-        // PT
-        // Map each entry in the page table for a total of 2 MiB.
-        for i in 0..512 {
-            core::ptr::write(
-                (0x74000 + i * 8) as *mut u64,
-                (kernel_addr.0 + 0x1000 * i) | 0b11,
+        // Map the kernel code
+        for i in 0..(kernel_size + 4095) / 4096 {
+            next_paging_page = map_page(
+                kernel_virt_addr + i * 4096,
+                kernel_phys_addr.0 + i * 4096,
+                next_paging_page,
             );
         }
+
+        // Map the entry data page to where the kernel expects it
+        let entry_data_page_virt_addr = rk_elf64::find_symbol(kernel_elf_addr.0, "entry_data")
+            .expect("Could not find entry_data symbol in kernel elf")
+            .st_value;
+        next_paging_page = map_page(
+            entry_data_page_virt_addr,
+            entry_data_page_addr.0,
+            next_paging_page,
+        );
     }
     let pml4_addr: u64 = 0x70000;
 
@@ -250,6 +286,86 @@ fn efi_main(image_handle: EfiHandle, system_table: &'static mut EfiSystemTable) 
     // We should never get here because of the jump, but Rust doesn't know that and
     // we have to show that we have a diverging function
     rk_x86_64::hang()
+}
+
+/// Maps a single 4096 KiB page.
+///
+/// Helps keep track of how many paging pages we have left.
+///
+/// Addresses must be properly aligned.
+///
+/// It does not overwrite an existing mapping, and panics if such a collision
+/// occurs.
+unsafe fn map_page(virt: u64, phys: u64, mut next_paging_page: usize) -> usize {
+    // TODO: This function could really do with some cleaning up...
+
+    if next_paging_page >= PAGING_PAGES_COUNT {
+        panic!("Ran out of page tables");
+    }
+
+    // Make sure the addresses are page aligned
+    assert_eq!(virt & 0xfff, 0, "virt is not page aligned");
+    assert_eq!(phys & 0xfff, 0, "phys is not page aligned");
+
+    let pml4_index = (virt >> (12 + 9 + 9 + 9)) % 512;
+    let pdp_index = (virt >> (12 + 9 + 9)) % 512;
+    let pd_index = (virt >> (12 + 9)) % 512;
+    let pt_index = (virt >> 12) % 512;
+
+    let pml4_entry_addr: u64 = 0x70000 + pml4_index * 8;
+    let pml4_entry = rk_x86_64::PageTableEntry::read(pml4_entry_addr as *const u64);
+    let pdp_addr: u64;
+    if pml4_entry.is_present() {
+        pdp_addr = pml4_entry.addr();
+    } else {
+        pdp_addr = (0x70000 + next_paging_page * 4096) as u64;
+        next_paging_page += 1;
+        if next_paging_page >= PAGING_PAGES_COUNT {
+            panic!("Ran out of page tables");
+        }
+        core::ptr::write(pml4_entry_addr as *mut u64, pdp_addr | 0b11);
+        // TODO: If we start a new paging table we know for sure that the
+        // following entries will not be present.
+    }
+
+    let pdp_entry_addr: u64 = pdp_addr + pdp_index * 8;
+    let pdp_entry = rk_x86_64::PageTableEntry::read(pdp_entry_addr as *const u64);
+    let pd_addr: u64;
+    if pdp_entry.is_present() {
+        pd_addr = pdp_entry.addr();
+    } else {
+        pd_addr = (0x70000 + next_paging_page * 4096) as u64;
+        next_paging_page += 1;
+        if next_paging_page >= PAGING_PAGES_COUNT {
+            panic!("Ran out of page tables");
+        }
+        core::ptr::write(pdp_entry_addr as *mut u64, pd_addr | 0b11);
+    }
+
+    let pd_entry_addr: u64 = pd_addr + pd_index * 8;
+    let pd_entry = rk_x86_64::PageTableEntry::read(pd_entry_addr as *const u64);
+    let pt_addr: u64;
+    if pd_entry.is_present() {
+        pt_addr = pd_entry.addr();
+    } else {
+        pt_addr = (0x70000 + next_paging_page * 4096) as u64;
+        next_paging_page += 1;
+        if next_paging_page >= PAGING_PAGES_COUNT {
+            panic!("Ran out of page tables");
+        }
+        core::ptr::write(pd_entry_addr as *mut u64, pt_addr | 0b11);
+    }
+
+    let pt_entry_addr: u64 = pt_addr + pt_index * 8;
+    let pt_entry = rk_x86_64::PageTableEntry::read(pt_entry_addr as *const u64);
+
+    if pt_entry.is_present() && pt_entry.addr() != phys {
+        panic!("There is already a mapping for this virt, and it doesn't match phys");
+    }
+
+    core::ptr::write(pt_entry_addr as *mut u64, phys | 0b11);
+
+    next_paging_page
 }
 
 /// Loads the kernel ELF and returns the physical address.
