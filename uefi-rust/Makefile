@@ -4,10 +4,10 @@ LIBS = $(shell find libs/*/src -type f)
 
 all: disk
 
-disk/EFI/BOOT/BOOTX64.EFI: $(shell find src -type f) $(LIBS)
+disk/EFI/BOOT/BOOTX64.EFI: $(shell find bootloader/src -type f) $(LIBS)
 	mkdir -p disk/EFI/BOOT
-	cargo build
-	cp target/x86_64-unknown-uefi/debug/uefi-rust.efi disk/EFI/BOOT/BOOTX64.EFI
+	cd bootloader && cargo build
+	cp bootloader/target/x86_64-unknown-uefi/debug/rk_bootloader.efi disk/EFI/BOOT/BOOTX64.EFI
 
 disk/RK_KERNEL.ELF: $(shell find kernel/src -type f) $(LIBS) kernel/font.o
 	mkdir -p disk
@@ -36,11 +36,12 @@ qemu: disk
 		-d int -no-reboot -no-shutdown
 
 fmt:
-	cargo fmt
+	cd bootloader && cargo fmt
 	cd kernel && cargo fmt
 
 clean:
 	rm -rf disk
-	#rm -rf target
+	#rm -rf bootloader/target
 	#rm -rf kernel/target
+	rm -f kernel/font.o
 	rm -f serial
