@@ -24,6 +24,10 @@ use rk_uefi::{print, println, system_table};
 #[repr(C)]
 struct EntryData {
     greeting: u32,
+    fb_base: u64,
+    fb_horizontal_resolution: u32,
+    fb_vertical_resolution: u32,
+    fb_pixels_per_scan_line: u32,
 }
 
 /// The amount of pages we will reserve for our own paging tables.
@@ -36,7 +40,13 @@ fn efi_main(image_handle: EfiHandle, system_table: &'static mut EfiSystemTable) 
 
     rk_uefi::system_table().con_out().reset(false);
 
-    let entry_data = EntryData { greeting: 0x1f427 };
+    let mut entry_data = EntryData {
+        greeting: 0x1f427,
+        fb_base: 0,
+        fb_horizontal_resolution: 0,
+        fb_vertical_resolution: 0,
+        fb_pixels_per_scan_line: 0,
+    };
 
     println!("Hello World!");
 
@@ -74,7 +84,7 @@ fn efi_main(image_handle: EfiHandle, system_table: &'static mut EfiSystemTable) 
         .output_string(&file_info.volume_label[0]);
     println!("");
 
-    // Print info about the current graphics mode
+    // Get info about the current graphics mode
     let mut ptr = core::ptr::null_mut();
     let status = rk_uefi::system_table().boot_services().locate_protocol(
         &EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID,
@@ -94,6 +104,11 @@ fn efi_main(image_handle: EfiHandle, system_table: &'static mut EfiSystemTable) 
         gop_mode_info.vertical_resolution,
         gop_mode.frame_buffer_base.0
     );
+    // Pass this info to the kernel
+    entry_data.fb_base = gop_mode.frame_buffer_base.0;
+    entry_data.fb_horizontal_resolution = gop_mode_info.horizontal_resolution;
+    entry_data.fb_vertical_resolution = gop_mode_info.vertical_resolution;
+    entry_data.fb_pixels_per_scan_line = gop_mode_info.pixels_per_scan_line;
 
     // Load the kernel ELF
     let kernel_elf_addr = load_kernel_elf(image_handle);
@@ -269,14 +284,6 @@ fn efi_main(image_handle: EfiHandle, system_table: &'static mut EfiSystemTable) 
 
     // Write the address of our new PML4 into the CR3 register
     rk_x86_64::register::cr3::write(pml4_addr);
-
-    // Write some pixels to the frame buffer
-    let fb = 0x8000_0000 as *mut u32;
-    for i in 0..40_000 {
-        unsafe {
-            fb.offset(i).write(0x00ff00ff);
-        }
-    }
 
     // Jump into the kernel
     unsafe {

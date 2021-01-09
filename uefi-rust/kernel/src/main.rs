@@ -2,12 +2,19 @@
 #![no_main]
 #![feature(asm)]
 
+mod graphics;
+
+use crate::graphics::Screen;
 use core::panic::PanicInfo;
 
 /// The data structure passed to the kernel on entry.
 #[repr(C)]
 pub struct EntryData {
     greeting: u32,
+    fb_base: u64,
+    fb_horizontal_resolution: u32,
+    fb_vertical_resolution: u32,
+    fb_pixels_per_scan_line: u32,
 }
 
 extern "C" {
@@ -16,23 +23,19 @@ extern "C" {
 
 #[no_mangle]
 fn _start() -> ! {
-    // Assuming we have a frame buffer at 0x8000_0000 with a ??G? pixel format this
-    // should draw some green pixels on the screen.
-    let fb = 0x8000_0000 as *mut u32;
-    for i in 40_000..80_000 {
-        unsafe {
-            fb.offset(i).write_volatile(0x0000ff00);
-        }
+    // Initialize a screen from the frame buffer provided by the bootloader
+    let screen: Screen;
+    unsafe {
+        screen = Screen::new(
+            entry_data.fb_base,
+            entry_data.fb_horizontal_resolution,
+            entry_data.fb_vertical_resolution,
+            entry_data.fb_pixels_per_scan_line,
+        );
     }
 
-    unsafe {
-        asm!("", in("r12") entry_data.greeting);
-        asm!("int3");
-        // Looking in the R12 register at the time of the INT3 exception we
-        // should see the value transferred from the bootloader. We'll also have
-        // a page fault and system crash since we haven't set up our interrupt
-        // table yet.
-    }
+    // Clear the screen
+    screen.clear();
 
     loop {}
 }
