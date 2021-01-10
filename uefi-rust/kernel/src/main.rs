@@ -28,27 +28,29 @@ extern "C" {
     pub static entry_data: EntryData;
 }
 
+lazy_static! {
+    pub static ref SCREEN: Screen = unsafe {
+        // Initialize a screen from the frame buffer provided by the bootloader, which
+        // should satisfy the safety requirements.
+        Screen::new(
+            entry_data.fb_base,
+            entry_data.fb_horizontal_resolution,
+            entry_data.fb_vertical_resolution,
+            entry_data.fb_pixels_per_scan_line,
+        )
+    };
+}
+
 #[no_mangle]
 fn _start() -> ! {
     // Set up interrupts
     interrupts::init();
 
-    // Initialize a screen from the frame buffer provided by the bootloader
-    let screen: Screen;
-    unsafe {
-        screen = Screen::new(
-            entry_data.fb_base,
-            entry_data.fb_horizontal_resolution,
-            entry_data.fb_vertical_resolution,
-            entry_data.fb_pixels_per_scan_line,
-        );
-    }
-
     // Clear the screen
-    screen.clear();
+    SCREEN.clear();
 
     // Initialize a new text terminal
-    let mut terminal = terminal::Terminal::new(screen);
+    let mut terminal = terminal::Terminal::new(*SCREEN);
 
     // Print the digits
     for c in 0..10 {

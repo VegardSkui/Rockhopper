@@ -27,12 +27,12 @@ impl Screen {
     }
 
     /// Returns the horizontal resolution of the screen.
-    pub fn horizontal_resolution(self) -> u32 {
+    pub fn horizontal_resolution(&self) -> u32 {
         self.horizontal_resolution
     }
 
     /// Returns the vertical resolution of the screen.
-    pub fn vertical_resolution(self) -> u32 {
+    pub fn vertical_resolution(&self) -> u32 {
         self.vertical_resolution
     }
 
