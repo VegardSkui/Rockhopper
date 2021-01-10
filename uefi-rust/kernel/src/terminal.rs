@@ -27,14 +27,20 @@ impl<'a> Terminal<'a> {
     }
 
     /// Puts a character at the current position.
-    pub fn put_char(&mut self, character: u32) {
+    pub fn put_char(&mut self, character: char) {
+        // Recognize newline characters and exit early
+        if character == '\n' {
+            self.new_line();
+            return;
+        }
+
         // Insert a new line if the cursor is to the right of the screen
         if self.cx >= self.cwidth {
             self.new_line();
         }
 
         let bytes_per_line = FONT.bytes_per_line();
-        let mut glyph_ptr = FONT.glyph_ptr(character);
+        let mut glyph_ptr = FONT.glyph_ptr(character as u32);
 
         // Calculate the pixel offset of the top left corner of the character
         let offset_y = self.cy * FONT.header().height;
@@ -73,6 +79,13 @@ impl<'a> Terminal<'a> {
         self.cx += 1;
     }
 
+    /// Puts a string starting at the current cursor position.
+    pub fn put_string(&mut self, s: &str) {
+        for c in s.chars() {
+            self.put_char(c);
+        }
+    }
+
     pub fn new_line(&mut self) {
         self.cy += 1;
         self.cx = 0;
@@ -89,10 +102,7 @@ impl<'a> Terminal<'a> {
 
 impl fmt::Write for Terminal<'_> {
     fn write_str(&mut self, s: &str) -> fmt::Result {
-        // TODO: UTF-8 to Unicode Codepoint
-        for byte in s.bytes() {
-            self.put_char(byte as u32);
-        }
+        self.put_string(s);
         Ok(())
     }
 }
@@ -108,4 +118,10 @@ pub fn _print(args: fmt::Arguments) {
 #[macro_export]
 macro_rules! print {
     ($($arg:tt)*) => ($crate::terminal::_print(format_args!($($arg)*)));
+}
+
+#[macro_export]
+macro_rules! println {
+    () => ($crate::print!("\n"));
+    ($($arg:tt)*) => ($crate::print!("{}\n", format_args!($($arg)*)));
 }

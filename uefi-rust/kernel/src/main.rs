@@ -56,7 +56,7 @@ fn _start() -> ! {
 
     // Print the digits
     for c in 0..10 {
-        print!("{}", c);
+        println!("{}", c);
     }
 
     loop {}
