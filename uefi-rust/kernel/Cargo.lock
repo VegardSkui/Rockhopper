@@ -3,3 +3,10 @@
 [[package]]
 name = "rk_kernel"
 version = "0.1.0"
+dependencies = [
+ "rk_x86_64",
+]
+
+[[package]]
+name = "rk_x86_64"
+version = "0.1.0"

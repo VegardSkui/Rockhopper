@@ -1,6 +1,8 @@
 #![no_std]
+#![feature(abi_x86_interrupt)]
 #![feature(asm)]
 
+pub mod idt;
 pub mod register;
 
 /// Halts the CPU forever.

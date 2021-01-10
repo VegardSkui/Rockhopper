@@ -4,3 +4,6 @@ version = "0.1.0"
 authors = ["Vegard Skui <me@vegardskui.com>"]
 edition = "2018"
 publish = false
+
+[dependencies]
+"rk_x86_64" = { path = "../libs/rk_x86_64" }

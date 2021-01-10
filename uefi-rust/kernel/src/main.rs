@@ -1,8 +1,10 @@
 #![no_std]
 #![no_main]
+#![feature(abi_x86_interrupt)]
 #![feature(asm)]
 
 mod graphics;
+mod interrupts;
 mod terminal;
 
 use crate::graphics::Screen;
@@ -24,6 +26,9 @@ extern "C" {
 
 #[no_mangle]
 fn _start() -> ! {
+    // Set up interrupts
+    interrupts::init();
+
     // Initialize a screen from the frame buffer provided by the bootloader
     let screen: Screen;
     unsafe {
