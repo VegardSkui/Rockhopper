@@ -12,7 +12,9 @@ mod psf2;
 mod terminal;
 
 use crate::graphics::Screen;
+use crate::terminal::Terminal;
 use core::panic::PanicInfo;
+use spin::Mutex;
 
 /// The data structure passed to the kernel on entry.
 #[repr(C)]
@@ -39,6 +41,9 @@ lazy_static! {
             entry_data.fb_pixels_per_scan_line,
         )
     };
+
+    // Initialize a text terminal on the screen provided by the bootloader.
+    pub static ref TERMINAL: Mutex<Terminal<'static>> = Mutex::new(Terminal::new(&SCREEN));
 }
 
 #[no_mangle]
@@ -49,20 +54,9 @@ fn _start() -> ! {
     // Clear the screen
     SCREEN.clear();
 
-    // Initialize a new text terminal
-    let mut terminal = terminal::Terminal::new(*SCREEN);
-
     // Print the digits
     for c in 0..10 {
-        terminal.put_char(0x30 + c);
-    }
-    terminal.new_line();
-
-    // Print the letters of the alphabet in both upper and lower case
-    for c in 0..26 {
-        terminal.put_char(0x41 + c);
-        terminal.put_char(0x61 + c);
-        terminal.new_line();
+        print!("{}", c);
     }
 
     loop {}

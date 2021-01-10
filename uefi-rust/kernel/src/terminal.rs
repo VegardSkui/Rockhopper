@@ -1,8 +1,10 @@
 use crate::graphics::Screen;
 use crate::psf2::FONT;
+use core::fmt;
 
-pub struct Terminal {
-    screen: Screen,
+/// Text-based output.
+pub struct Terminal<'a> {
+    screen: &'a Screen,
     /// The screen width in characters.
     cwidth: u32,
     /// The screen height in characters.
@@ -13,8 +15,8 @@ pub struct Terminal {
     cy: u32,
 }
 
-impl Terminal {
-    pub fn new(screen: Screen) -> Self {
+impl<'a> Terminal<'a> {
+    pub fn new(screen: &'a Screen) -> Self {
         Self {
             screen,
             cwidth: screen.horizontal_resolution() / FONT.header().width,
@@ -83,4 +85,27 @@ impl Terminal {
             self.cy = 0;
         }
     }
+}
+
+impl fmt::Write for Terminal<'_> {
+    fn write_str(&mut self, s: &str) -> fmt::Result {
+        // TODO: UTF-8 to Unicode Codepoint
+        for byte in s.bytes() {
+            self.put_char(byte as u32);
+        }
+        Ok(())
+    }
+}
+
+/// Prints using the global terminal, should only be used through the print!
+/// macro.
+#[doc(hidden)]
+pub fn _print(args: fmt::Arguments) {
+    use core::fmt::Write;
+    crate::TERMINAL.lock().write_fmt(args).unwrap();
+}
+
+#[macro_export]
+macro_rules! print {
+    ($($arg:tt)*) => ($crate::terminal::_print(format_args!($($arg)*)));
 }
