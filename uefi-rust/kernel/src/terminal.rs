@@ -44,7 +44,7 @@ impl<'a> Terminal<'a> {
         // represent the question mark either, panic.
         let mut glyph_ptr = FONT
             .glyph_ptr(character as u32)
-            .unwrap_or(FONT.glyph_ptr('?' as u32).unwrap());
+            .unwrap_or_else(|_| FONT.glyph_ptr('?' as u32).unwrap());
 
         // Calculate the pixel offset of the top left corner of the character
         let offset_y = self.cy * FONT.header().height;
