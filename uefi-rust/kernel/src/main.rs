@@ -3,8 +3,12 @@
 #![feature(abi_x86_interrupt)]
 #![feature(asm)]
 
+#[macro_use]
+extern crate lazy_static;
+
 mod graphics;
 mod interrupts;
+mod psf2;
 mod terminal;
 
 use crate::graphics::Screen;

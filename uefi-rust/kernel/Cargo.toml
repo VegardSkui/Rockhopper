@@ -6,4 +6,5 @@ edition = "2018"
 publish = false
 
 [dependencies]
+"lazy_static" = { version = "1.4.0", features = ["spin_no_std"] }
 "rk_x86_64" = { path = "../libs/rk_x86_64" }
