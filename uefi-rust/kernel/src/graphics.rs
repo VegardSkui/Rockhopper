@@ -38,11 +38,13 @@ impl Screen {
 
     /// Clears the screen (fills it with black pixels).
     pub fn clear(&self) {
-        // TODO: This is inefficient, should probably use something like memset.
-        for y in 0..self.vertical_resolution {
-            for x in 0..self.horizontal_resolution {
-                self.put_pixel(x, y, 0);
-            }
+        // This is safe assuming the screen parameters are correct.
+        unsafe {
+            core::ptr::write_bytes(
+                self.fb_base as *mut u32,
+                0,
+                (self.pixels_per_scan_line * self.vertical_resolution) as usize,
+            );
         }
     }
 
