@@ -39,8 +39,12 @@ impl<'a> Terminal<'a> {
             self.new_line();
         }
 
-        let bytes_per_line = FONT.bytes_per_line();
-        let mut glyph_ptr = FONT.glyph_ptr(character as u32);
+        // Get the pointer to the glyph for the requested character. If the font doesn't
+        // include the character, use the question mark instead. If the font cannot
+        // represent the question mark either, panic.
+        let mut glyph_ptr = FONT
+            .glyph_ptr(character as u32)
+            .unwrap_or(FONT.glyph_ptr('?' as u32).unwrap());
 
         // Calculate the pixel offset of the top left corner of the character
         let offset_y = self.cy * FONT.header().height;
@@ -48,6 +52,7 @@ impl<'a> Terminal<'a> {
 
         // Draw the character to the screen
         let mut mask: u32;
+        let bytes_per_line = FONT.bytes_per_line();
         for y in 0..FONT.header().height {
             // Reset the mask for this line
             mask = 1 << (FONT.header().width - 1);

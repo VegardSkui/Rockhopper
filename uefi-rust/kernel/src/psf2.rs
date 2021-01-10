@@ -46,15 +46,17 @@ impl Font {
     }
 
     /// Returns a pointer to the glyph of the given character.
-    pub fn glyph_ptr(&self, character: u32) -> *const u8 {
-        // TODO: Make sure the character exists in the font. If not, return a not found
-        // glyph, or error if the not found glyph doesn't exist either.
+    pub fn glyph_ptr(&self, character: u32) -> Result<*const u8, ()> {
         // TODO: PSF2 unicode translation table.
 
-        // Should be safe if the character exists in the font (TODO) and the font is
-        // valid
-        let offset = self.header().headersize + character * self.header().charsize;
-        unsafe { self.pointer().add(offset as usize) }
+        // Make sure the character exists in the font
+        if character < self.header().length {
+            // Should be safe if the font header is correct
+            let offset = self.header().headersize + character * self.header().charsize;
+            Ok(unsafe { self.pointer().add(offset as usize) })
+        } else {
+            Err(())
+        }
     }
 
     /// Returns how many bytes encode each row in a character.
