@@ -1,6 +1,7 @@
 #![no_std]
 #![feature(abi_x86_interrupt)]
 #![feature(asm)]
+#![feature(const_fn_fn_ptr_basics)]
 
 pub mod idt;
 pub mod register;
