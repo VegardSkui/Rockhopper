@@ -21,11 +21,35 @@ pub struct InterruptDescriptorTable {
     /// The error code is always zero and can be ignored.
     pub double_fault: Descriptor<DivergingInterruptHandlerWithErrorCode>,
 
-    // TODO: Add the remaining CPU exceptions, remember that aborts should be diverging. The
-    // comment below is wrong until this is done.
+    // LEGACY
+    coprocessor_segment_overrun: Descriptor<InterruptHandler>,
+
+    pub invalid_tss: Descriptor<InterruptHandlerWithErrorCode>,
+    pub segment_not_present: Descriptor<InterruptHandlerWithErrorCode>,
+    pub stack_segment_fault: Descriptor<InterruptHandlerWithErrorCode>,
+    pub general_protection_fault: Descriptor<InterruptHandlerWithErrorCode>,
+    pub page_fault: Descriptor<InterruptHandlerWithErrorCode>,
+
+    reserved15: Descriptor<InterruptHandler>,
+
+    pub x87_floating_point_exception: Descriptor<InterruptHandler>,
+    pub alignment_check: Descriptor<InterruptHandlerWithErrorCode>,
+
+    /// Machine Check is an abort type CPU exception and is not recoverable.
+    pub machine_check: Descriptor<DivergingInterruptHandler>,
+
+    pub simd_floating_point_exception: Descriptor<InterruptHandler>,
+    pub virtualization_exception: Descriptor<InterruptHandler>,
+
+    reserved21_29: [Descriptor<InterruptHandler>; 9],
+
+    pub security_exception: Descriptor<InterruptHandlerWithErrorCode>,
+
+    reserved31: Descriptor<InterruptHandler>,
+
     /// General interrupts, remember that the first index refers to the 32nd
     /// interrupt.
-    pub interrupts: [Descriptor<InterruptHandler>; 256 - 9],
+    pub interrupts: [Descriptor<InterruptHandler>; 224],
 }
 
 impl InterruptDescriptorTable {
@@ -41,7 +65,22 @@ impl InterruptDescriptorTable {
             invalid_opcode: Descriptor::not_present(),
             device_not_available: Descriptor::not_present(),
             double_fault: Descriptor::not_present(),
-            interrupts: [Descriptor::not_present(); 256 - 9],
+            coprocessor_segment_overrun: Descriptor::not_present(),
+            invalid_tss: Descriptor::not_present(),
+            segment_not_present: Descriptor::not_present(),
+            stack_segment_fault: Descriptor::not_present(),
+            general_protection_fault: Descriptor::not_present(),
+            page_fault: Descriptor::not_present(),
+            reserved15: Descriptor::not_present(),
+            x87_floating_point_exception: Descriptor::not_present(),
+            alignment_check: Descriptor::not_present(),
+            machine_check: Descriptor::not_present(),
+            simd_floating_point_exception: Descriptor::not_present(),
+            virtualization_exception: Descriptor::not_present(),
+            reserved21_29: [Descriptor::not_present(); 9],
+            security_exception: Descriptor::not_present(),
+            reserved31: Descriptor::not_present(),
+            interrupts: [Descriptor::not_present(); 224],
         }
     }
 
@@ -111,6 +150,20 @@ impl Descriptor<InterruptHandler> {
     }
 }
 
+impl Descriptor<DivergingInterruptHandler> {
+    /// Sets the handler function.
+    pub fn set_handler(&mut self, handler: DivergingInterruptHandler) {
+        self.set_handler_internal(handler as u64);
+    }
+}
+
+impl Descriptor<InterruptHandlerWithErrorCode> {
+    /// Sets the handler function.
+    pub fn set_handler(&mut self, handler: InterruptHandlerWithErrorCode) {
+        self.set_handler_internal(handler as u64);
+    }
+}
+
 impl Descriptor<DivergingInterruptHandlerWithErrorCode> {
     /// Sets the handler function.
     pub fn set_handler(&mut self, handler: DivergingInterruptHandlerWithErrorCode) {
@@ -119,6 +172,8 @@ impl Descriptor<DivergingInterruptHandlerWithErrorCode> {
 }
 
 pub type InterruptHandler = extern "x86-interrupt" fn(&InterruptFrame);
+pub type DivergingInterruptHandler = extern "x86-interrupt" fn(&InterruptFrame) -> !;
+pub type InterruptHandlerWithErrorCode = extern "x86-interrupt" fn(&InterruptFrame, u64);
 pub type DivergingInterruptHandlerWithErrorCode =
     extern "x86-interrupt" fn(&InterruptFrame, u64) -> !;
 
