@@ -2,6 +2,7 @@
 #![feature(abi_x86_interrupt)]
 #![feature(asm)]
 #![feature(const_fn_fn_ptr_basics)]
+#![feature(naked_functions)]
 
 pub mod idt;
 pub mod register;
@@ -33,4 +34,25 @@ impl PageTableEntry {
         // Remove the 12 least significant bits (the options)
         self.0 >> 12 << 12
     }
+}
+
+/// Loads a segment selector into the code segment register.
+///
+/// # Safety
+/// The `segment_selector` must reference a valid code segment descriptor.
+#[naked]
+pub unsafe extern "sysv64" fn load_cs(_segment_selector: u16) {
+    asm!(
+        // Pop the return address off the stack, rax is a scratch register in the System V ABI.
+        "pop rax",
+        // Push the selector onto the stack, the System V ABI specifies that the first argument
+        // is passed through rdi.
+        "push rdi",
+        // Push the return address back onto the stack.
+        "push rax",
+        // Do a far return, which pops an extra element off the stack and loads it into the
+        // code segment register.
+        "retfq",
+        options(noreturn)
+    );
 }
