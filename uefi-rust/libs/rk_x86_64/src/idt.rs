@@ -82,7 +82,17 @@ impl Descriptor {
     }
 }
 
-pub type Handler = extern "x86-interrupt" fn();
+pub type Handler = extern "x86-interrupt" fn(&InterruptFrame);
+
+#[derive(Debug)]
+#[repr(C)]
+pub struct InterruptFrame {
+    ip: u64,
+    cs: u64,
+    flags: u64,
+    sp: u64,
+    ss: u64,
+}
 
 // Use packed representation to stop Rust from adding padding and thus breaking
 // the representation.
