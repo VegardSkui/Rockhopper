@@ -6,6 +6,7 @@
 #[macro_use]
 extern crate lazy_static;
 
+mod gdt;
 mod graphics;
 mod interrupts;
 mod psf2;
@@ -48,7 +49,7 @@ lazy_static! {
 
 #[no_mangle]
 fn _start() -> ! {
-    // Set up interrupts
+    gdt::init();
     interrupts::init();
 
     // Clear the screen

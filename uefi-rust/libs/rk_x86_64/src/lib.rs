@@ -4,6 +4,7 @@
 #![feature(const_fn_fn_ptr_basics)]
 #![feature(naked_functions)]
 
+pub mod gdt;
 pub mod idt;
 pub mod register;
 
@@ -36,4 +37,12 @@ impl PageTableEntry {
     }
 }
 
+// Use packed representation to stop Rust from adding padding and thus breaking
+// the representation.
+#[repr(C, packed)]
+struct DescriptorTablePointer {
+    /// The size of the table - 1.
+    size: u16,
+    /// Pointer to the table.
+    offset: u64,
 }

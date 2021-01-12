@@ -1,4 +1,5 @@
 use crate::register::cs;
+use crate::DescriptorTablePointer;
 use core::marker::PhantomData;
 
 /// An IDT with 256 entries.
@@ -90,7 +91,7 @@ impl InterruptDescriptorTable {
     /// # Safety
     /// `self` must not be destroyed for as long as it's the active IDT.
     pub fn load(&self) {
-        let pointer = InterruptTablePointer {
+        let pointer = DescriptorTablePointer {
             size: (core::mem::size_of::<Self>() - 1) as u16,
             offset: self as *const _ as u64,
         };
@@ -187,14 +188,4 @@ pub struct InterruptFrame {
     flags: u64,
     sp: u64,
     ss: u64,
-}
-
-// Use packed representation to stop Rust from adding padding and thus breaking
-// the representation.
-#[repr(C, packed)]
-struct InterruptTablePointer {
-    /// The size of the IDT - 1.
-    size: u16,
-    /// Pointer to the IDT.
-    offset: u64,
 }
