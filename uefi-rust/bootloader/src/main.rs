@@ -282,10 +282,14 @@ fn efi_main(image_handle: EfiHandle, system_table: &'static mut EfiSystemTable) 
     // Make sure PSE and PAE is enabled (PSE is always enabled when PAE is enabled
     // regardless of the PSE bit, but we set it anyways, just in case)
     let cr4 = rk_x86_64::register::cr4::read();
-    rk_x86_64::register::cr4::write(cr4 | 1 << 4 | 1 << 5);
+    unsafe {
+        rk_x86_64::register::cr4::write(cr4 | 1 << 4 | 1 << 5);
+    }
 
     // Write the address of our new PML4 into the CR3 register
-    rk_x86_64::register::cr3::write(pml4_addr);
+    unsafe {
+        rk_x86_64::register::cr3::write(pml4_addr);
+    }
 
     // Jump into the kernel
     unsafe {

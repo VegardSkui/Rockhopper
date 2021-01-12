@@ -1,3 +1,4 @@
+/// Control Register 0 (CR0).
 pub mod cr0 {
     /// Returns the current value of the CR0 register.
     pub fn read() -> u64 {
@@ -9,13 +10,16 @@ pub mod cr0 {
     }
 
     /// Loads a new value into the CR0 register.
-    pub fn write(value: u64) {
-        unsafe {
-            asm!("mov cr0, {}", in(reg) value);
-        }
+    ///
+    /// # Safety
+    /// An incorrect or unexpected value can break safety guarantees.
+    pub unsafe fn write(value: u64) {
+        asm!("mov cr0, {}", in(reg) value);
     }
 }
 
+/// Control Register 3 (CR3) contains the current physical address of the PML4
+/// table.
 pub mod cr3 {
     /// Returns the current value of the CR3 register.
     pub fn read() -> u64 {
@@ -27,13 +31,15 @@ pub mod cr3 {
     }
 
     /// Loads a new value into the CR3 register.
-    pub fn write(value: u64) {
-        unsafe {
-            asm!("mov cr3, {}", in(reg) value);
-        }
+    ///
+    /// # Safety
+    /// Changing the PML4 can break most memory safety guarantees.
+    pub unsafe fn write(value: u64) {
+        asm!("mov cr3, {}", in(reg) value);
     }
 }
 
+/// Control Register 4 (CR4)
 pub mod cr4 {
     /// Returns the current value of the CR4 register.
     pub fn read() -> u64 {
@@ -45,10 +51,11 @@ pub mod cr4 {
     }
 
     /// Loads a new value into the CR4 register.
-    pub fn write(value: u64) {
-        unsafe {
-            asm!("mov cr4, {}", in(reg) value);
-        }
+    ///
+    /// # Safety
+    /// Changing the wrong flags can violate memory safety guarantees.
+    pub unsafe fn write(value: u64) {
+        asm!("mov cr4, {}", in(reg) value);
     }
 }
 
