@@ -51,3 +51,35 @@ pub mod cr4 {
         }
     }
 }
+
+pub mod cs {
+    /// Reads the value in the code segment register.
+    pub fn read() -> u16 {
+        let value: u16;
+        unsafe {
+            asm!("mov {0:x}, cs", out(reg) value);
+        }
+        value
+    }
+
+    /// Loads a segment selector into the code segment register.
+    ///
+    /// # Safety
+    /// The `segment_selector` must reference a valid code segment descriptor.
+    #[naked]
+    pub unsafe extern "sysv64" fn write(_segment_selector: u16) {
+        asm!(
+            // Pop the return address off the stack, rax is a scratch register in the System V ABI.
+            "pop rax",
+            // Push the selector onto the stack, the System V ABI specifies that the first argument
+            // is passed through rdi.
+            "push rdi",
+            // Push the return address back onto the stack.
+            "push rax",
+            // Do a far return, which pops an extra element off the stack and loads it into the
+            // code segment register.
+            "retfq",
+            options(noreturn)
+        );
+    }
+}

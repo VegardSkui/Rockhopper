@@ -1,3 +1,4 @@
+use crate::register::cs;
 use core::marker::PhantomData;
 
 /// An IDT with 256 entries.
@@ -129,14 +130,15 @@ impl<F> Descriptor<F> {
     }
 
     /// Sets the handler function using the address.
+    ///
+    /// Uses the currently active code segment selector for the code selector
+    /// field.
     fn set_handler_internal(&mut self, addr: u64) {
         self.offset_1 = addr as u16;
         self.offset_2 = (addr >> 16) as u16;
         self.offset_3 = (addr >> 32) as u32;
 
-        // TODO: Don't hardcode the selector, read and use the current code selector
-        // instead.
-        self.selector = 0x38;
+        self.selector = cs::read();
 
         // Set the present bit
         self.options |= 1 << 15;
