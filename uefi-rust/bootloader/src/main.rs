@@ -252,7 +252,7 @@ fn efi_main(image_handle: EfiHandle, system_table: &'static mut EfiSystemTable) 
         // PML4
         core::ptr::write(0x70000 as *mut u64, 0x71000 | 0b11);
 
-        // Identity map the first 4 GiB using three PDP huge pages
+        // Identity map the first 4 GiB using four PDP huge pages
         core::ptr::write(0x71000 as *mut u64, 0b1000_0011);
         core::ptr::write((0x71000 + 1 * 8) as *mut u64, 0x4000_0000 | 0b1000_0011);
         core::ptr::write((0x71000 + 2 * 8) as *mut u64, 0x8000_0000 | 0b1000_0011);

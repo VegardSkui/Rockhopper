@@ -16,9 +16,14 @@ pub fn hang() -> ! {
     }
 }
 
+/// An entry in a page table.
 pub struct PageTableEntry(u64);
 
 impl PageTableEntry {
+    /// Reads a page table entry from the specified address.
+    ///
+    /// # Safety
+    /// The address must point to a page table entry.
     pub unsafe fn read(addr: *const u64) -> Self {
         Self {
             0: core::ptr::read(addr),
