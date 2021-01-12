@@ -9,6 +9,7 @@ extern crate lazy_static;
 mod gdt;
 mod graphics;
 mod interrupts;
+mod memory;
 mod psf2;
 mod terminal;
 
