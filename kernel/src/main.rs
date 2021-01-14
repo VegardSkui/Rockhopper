@@ -37,7 +37,7 @@ lazy_static! {
         // Initialize a screen from the frame buffer provided by the bootloader, which
         // should satisfy the safety requirements.
         Screen::new(
-            entry_data.fb_base,
+            memory::PHYS_MEM_OFFSET | entry_data.fb_base,
             entry_data.fb_horizontal_resolution,
             entry_data.fb_vertical_resolution,
             entry_data.fb_pixels_per_scan_line,
@@ -50,6 +50,7 @@ lazy_static! {
 
 #[no_mangle]
 fn _start() -> ! {
+    memory::init();
     gdt::init();
     interrupts::init();
 
