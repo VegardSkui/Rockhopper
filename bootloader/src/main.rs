@@ -267,6 +267,18 @@ fn efi_main(image_handle: EfiHandle, system_table: &'static mut EfiSystemTable) 
             );
         }
 
+        // Map the 2 MiB at the very top of virtual memory to 16-18 MiB, this will be
+        // used for the stack
+        // TODO: It's not safe to assume that the memory at 16-18 MiB is free for us to
+        // use for the stack
+        for i in 0..512 {
+            next_paging_page = map_page(
+                0xffff_ffff_ffe0_0000 + 0x1000 * i,
+                0x1000000 + 0x1000 * i,
+                next_paging_page,
+            );
+        }
+
         // Map the entry data page to where the kernel expects it
         let entry_data_page_virt_addr = rk_elf64::find_symbol(kernel_elf_addr.0, "entry_data")
             .expect("Could not find entry_data symbol in kernel elf")
@@ -291,9 +303,14 @@ fn efi_main(image_handle: EfiHandle, system_table: &'static mut EfiSystemTable) 
         rk_x86_64::register::cr3::write(pml4_addr);
     }
 
-    // Jump into the kernel
+    // Move the stack to the very top of virtual memory and jump into the kernel
     unsafe {
-        asm!("jmp {}", in(reg) kernel_entry, options(noreturn));
+        asm!(
+            "mov rsp, 0",
+            "jmp {}",
+            in(reg) kernel_entry,
+            options(noreturn)
+        );
     }
 }
 
