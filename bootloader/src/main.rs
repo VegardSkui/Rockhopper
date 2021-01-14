@@ -127,12 +127,13 @@ fn efi_main(image_handle: EfiHandle, system_table: &'static mut EfiSystemTable) 
     let mut kernel_virt_addr: u64 = 0; // Where the kernel expects to be located
     let kernel_entry = kernel_elf_file_header.e_entry;
 
-    // Find the first loadable program header, we assume this to be our kernel
+    // Find the first loadable program header with a virtual address in the last
+    // entry of the PML4, we assume this to be our kernel
     let kernel_elf_program_header_table =
         (kernel_elf_addr.0 + kernel_elf_file_header.e_phoff) as *const rk_elf64::ProgramHeader;
     for i in 0..kernel_elf_file_header.e_phnum {
         let ph = unsafe { *kernel_elf_program_header_table.offset(i as isize) };
-        if ph.p_type == rk_elf64::ProgramType::PT_LOAD {
+        if ph.p_type == rk_elf64::ProgramType::PT_LOAD && (ph.p_vaddr >> 39) == 0x1ff_ffff {
             kernel_size = ph.p_filesz;
             kernel_virt_addr = ph.p_vaddr;
 
