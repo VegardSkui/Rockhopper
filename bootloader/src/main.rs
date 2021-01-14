@@ -293,12 +293,8 @@ fn efi_main(image_handle: EfiHandle, system_table: &'static mut EfiSystemTable) 
 
     // Jump into the kernel
     unsafe {
-        asm!("jmp {}", in(reg) kernel_entry);
+        asm!("jmp {}", in(reg) kernel_entry, options(noreturn));
     }
-
-    // We should never get here because of the jump, but Rust doesn't know that and
-    // we have to show that we have a diverging function
-    rk_x86_64::hang()
 }
 
 /// Maps a single 4096 KiB page.
