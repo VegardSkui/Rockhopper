@@ -1,8 +1,11 @@
 #![no_std]
 #![no_main]
 #![feature(abi_x86_interrupt)]
+#![feature(alloc_error_handler)]
 #![feature(asm)]
 
+#[macro_use]
+extern crate alloc;
 #[macro_use]
 extern crate lazy_static;
 
@@ -62,6 +65,13 @@ fn _start() -> ! {
         println!("{}", c);
     }
 
+    // Test the kernel heap by using vectors
+    let mut vector1 = vec![10, 20, 30];
+    println!("Vector1 = {:?}", vector1);
+    let mut vector2 = vec![70, 80, 90];
+    vector1.append(&mut vector2);
+    println!("Vector1+2 = {:?}", vector1);
+
     loop {}
 }
 
@@ -70,4 +80,9 @@ fn panic(info: &PanicInfo) -> ! {
     println!("{}", info);
 
     loop {}
+}
+
+#[alloc_error_handler]
+fn alloc_error_handler(layout: core::alloc::Layout) -> ! {
+    panic!("ALLOCATION ERROR: {:?}", layout);
 }

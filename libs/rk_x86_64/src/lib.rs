@@ -6,6 +6,7 @@
 
 pub mod gdt;
 pub mod idt;
+pub mod paging;
 pub mod register;
 
 /// Halts the CPU forever.
@@ -13,32 +14,6 @@ pub mod register;
 pub fn hang() -> ! {
     loop {
         unsafe { asm!("hlt") }
-    }
-}
-
-/// An entry in a page table.
-pub struct PageTableEntry(u64);
-
-impl PageTableEntry {
-    /// Reads a page table entry from the specified address.
-    ///
-    /// # Safety
-    /// The address must point to a page table entry.
-    pub unsafe fn read(addr: *const u64) -> Self {
-        Self {
-            0: core::ptr::read(addr),
-        }
-    }
-
-    #[inline]
-    pub fn is_present(&self) -> bool {
-        self.0 & 1 == 1
-    }
-
-    #[inline]
-    pub fn addr(&self) -> u64 {
-        // Remove the 12 least significant bits (the options)
-        self.0 >> 12 << 12
     }
 }
 

@@ -340,7 +340,7 @@ unsafe fn map_page(virt: u64, phys: u64, mut next_paging_page: usize) -> usize {
     let pt_index = (virt >> 12) % 512;
 
     let pml4_entry_addr: u64 = 0x70000 + pml4_index * 8;
-    let pml4_entry = rk_x86_64::PageTableEntry::read(pml4_entry_addr as *const u64);
+    let pml4_entry = rk_x86_64::paging::PageTableEntry::read(pml4_entry_addr as *const u64);
     let pdp_addr: u64;
     if pml4_entry.is_present() {
         pdp_addr = pml4_entry.addr();
@@ -356,7 +356,7 @@ unsafe fn map_page(virt: u64, phys: u64, mut next_paging_page: usize) -> usize {
     }
 
     let pdp_entry_addr: u64 = pdp_addr + pdp_index * 8;
-    let pdp_entry = rk_x86_64::PageTableEntry::read(pdp_entry_addr as *const u64);
+    let pdp_entry = rk_x86_64::paging::PageTableEntry::read(pdp_entry_addr as *const u64);
     let pd_addr: u64;
     if pdp_entry.is_present() {
         pd_addr = pdp_entry.addr();
@@ -370,7 +370,7 @@ unsafe fn map_page(virt: u64, phys: u64, mut next_paging_page: usize) -> usize {
     }
 
     let pd_entry_addr: u64 = pd_addr + pd_index * 8;
-    let pd_entry = rk_x86_64::PageTableEntry::read(pd_entry_addr as *const u64);
+    let pd_entry = rk_x86_64::paging::PageTableEntry::read(pd_entry_addr as *const u64);
     let pt_addr: u64;
     if pd_entry.is_present() {
         pt_addr = pd_entry.addr();
@@ -384,7 +384,7 @@ unsafe fn map_page(virt: u64, phys: u64, mut next_paging_page: usize) -> usize {
     }
 
     let pt_entry_addr: u64 = pt_addr + pt_index * 8;
-    let pt_entry = rk_x86_64::PageTableEntry::read(pt_entry_addr as *const u64);
+    let pt_entry = rk_x86_64::paging::PageTableEntry::read(pt_entry_addr as *const u64);
 
     if pt_entry.is_present() && pt_entry.addr() != phys {
         panic!("There is already a mapping for this virt, and it doesn't match phys");
@@ -436,24 +436,24 @@ fn load_kernel_elf(image: EfiHandle) -> EfiPhysicalAddress {
 
     println!("Kernel ELF Size = {} bytes", file_size);
 
-    // Panic if the kernel ELF is larger than 2 MiB
-    if file_size > 2 * 1024 * 1024 {
-        panic!("Kernel ELF too big, max 2 MiB");
+    // Panic if the kernel ELF is larger than 4 MiB
+    if file_size > 4 * 1024 * 1024 {
+        panic!("Kernel ELF too big, max 4 MiB");
     }
 
-    // Allocate pages for a 2 MiB contiguous block. Recall that each UEFI page is
-    // always 4096 KiB, so we need 512 pages.
+    // Allocate pages for a 4 MiB contiguous block. Recall that each UEFI page is
+    // always 4096 KiB, so we need 1024 pages.
     let kernel_addr = system_table()
         .boot_services()
         .allocate_pages(
             EfiAllocateType::AllocateAnyPages,
             EfiMemoryType::EfiLoaderData,
-            512,
+            1024,
         )
         .expect("Could not allocate page memory for the kernel ELF");
 
     let buffer = unsafe { &mut *(kernel_addr.0 as *mut core::ffi::c_void) };
-    let mut size: usize = 2 * 1024 * 1024;
+    let mut size: usize = 4 * 1024 * 1024;
     let status = file_handle.read(&mut size, buffer);
     if status.is_error() {
         panic!("Could not read kernel ELF");
