@@ -18,7 +18,8 @@ disk/TEST.TXT:
 	mkdir -p disk
 	cp test.txt disk/TEST.TXT
 
-kernel/font.o: kernel/font.psf
+kernel/font.o: vendor/terminus-font/ter-116n.psf
+	cp vendor/terminus-font/ter-116n.psf kernel/font.psf
 	cd kernel && llvm-objcopy --input-target binary --output-target elf64-x86-64 font.psf font.o
 
 disk: disk/EFI/BOOT/BOOTX64.EFI disk/RK_KERNEL.ELF disk/TEST.TXT
@@ -46,5 +47,6 @@ clean:
 	rm -rf disk
 	#rm -rf bootloader/target
 	#rm -rf kernel/target
+	rm -f kernel/font.psf
 	rm -f kernel/font.o
 	rm -f serial
